@@ -2,6 +2,8 @@
 
 <div align="center">
   <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600" alt="Learnify Platform" style="border-radius: 10px; margin: 20px 0;" />
+
+  <p><strong>🚀 Live Demo:</strong> <a href="https://learnify-corporate-training-platform.netlify.app">https://learnify-corporate-training-platform.netlify.app</a></p>
 </div>
 
 **Learnify** is a modern, full-featured online learning marketplace where instructors create courses and students learn. Built with cutting-edge technologies for optimal performance and developer experience.
@@ -83,8 +85,9 @@ After seeding the database, you can use these accounts:
 
 ## Support
 
+- [Live Demo](https://learnify-corporate-training-platform.netlify.app) - Try the platform
 - [GitHub Issues](https://github.com/alfredang/Learnify/issues) - Report bugs or request features
-- [Documentation](https://alfredang.github.io/Learnify/) - Full documentation
+- [GitHub Repository](https://github.com/alfredang/Learnify) - Source code
 
 ---
 

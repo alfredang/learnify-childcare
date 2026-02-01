@@ -16,8 +16,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/learnify-corporate-training-platform/deploy-status)](https://app.netlify.com/sites/learnify-corporate-training-platform/deploys)
 
-[📖 Documentation](https://alfredang.github.io/Learnify/) • [🚀 Demo](#demo) • [💻 Getting Started](#-quick-start) • [🤝 Contributing](#-contributing)
+[📖 Documentation](https://alfredang.github.io/Learnify/) • [🚀 Live Demo](https://learnify-corporate-training-platform.netlify.app) • [💻 Getting Started](#-quick-start) • [🤝 Contributing](#-contributing)
 
 ---
 
@@ -26,6 +27,14 @@
 *A full-featured online learning marketplace where instructors create courses and students learn.*
 
 </div>
+
+---
+
+## 🚀 Live Demo
+
+**[https://learnify-corporate-training-platform.netlify.app](https://learnify-corporate-training-platform.netlify.app)**
+
+> Try it out with the test accounts listed below!
 
 ---
 
@@ -167,7 +176,7 @@
 
 ### Prerequisites
 
-- **Node.js** 18.0 or higher
+- **Node.js** 20.0 or higher
 - **PostgreSQL** database ([Neon](https://neon.tech) recommended)
 - **Stripe** account for payments
 - **Cloudinary** account for media
@@ -291,7 +300,13 @@ learnify/
 
 ## 🚢 Deployment
 
-### Deploy to Vercel (Recommended)
+### Deploy to Netlify (Current)
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/alfredang/Learnify)
+
+This project is currently deployed on Netlify: **[Live Demo](https://learnify-corporate-training-platform.netlify.app)**
+
+### Deploy to Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alfredang/Learnify)
 
