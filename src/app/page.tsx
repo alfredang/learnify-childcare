@@ -51,7 +51,8 @@ async function getFeaturedCourses() {
       },
       take: 8,
     })
-    return courses
+    // Serialize to convert Prisma Decimal/Date to plain JSON types
+    return JSON.parse(JSON.stringify(courses))
   } catch {
     return []
   }

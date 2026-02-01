@@ -34,7 +34,8 @@ async function getCategory(slug: string) {
         },
       },
     })
-    return category
+    // Serialize to convert Prisma Decimal/Date to plain JSON types
+    return category ? JSON.parse(JSON.stringify(category)) : null
   } catch {
     return null
   }

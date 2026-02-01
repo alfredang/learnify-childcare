@@ -95,7 +95,7 @@ async function getCourses(searchParams: CoursesPageProps["searchParams"]) {
       break
   }
 
-  const [courses, total] = await Promise.all([
+  const [coursesRaw, total] = await Promise.all([
     prisma.course.findMany({
       where,
       include: {
@@ -115,6 +115,9 @@ async function getCourses(searchParams: CoursesPageProps["searchParams"]) {
     }),
     prisma.course.count({ where }),
   ])
+
+  // Serialize to convert Prisma Decimal/Date to plain JSON types
+  const courses = JSON.parse(JSON.stringify(coursesRaw))
 
   return {
     courses,
