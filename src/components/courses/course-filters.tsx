@@ -25,15 +25,15 @@ export function CourseFilters({ categories }: CourseFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const currentCategory = searchParams.get("category") || ""
-  const currentLevel = searchParams.get("level") || ""
-  const currentPrice = searchParams.get("price") || ""
-  const currentRating = searchParams.get("rating") || ""
+  const currentCategory = searchParams.get("category") || "all"
+  const currentLevel = searchParams.get("level") || "all"
+  const currentPrice = searchParams.get("price") || "all"
+  const currentRating = searchParams.get("rating") || "all"
   const currentSort = searchParams.get("sort") || "popular"
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) {
+    if (value && value !== "all") {
       params.set(key, value)
     } else {
       params.delete(key)
@@ -47,7 +47,10 @@ export function CourseFilters({ categories }: CourseFiltersProps) {
   }
 
   const hasFilters =
-    currentCategory || currentLevel || currentPrice || currentRating
+    (currentCategory && currentCategory !== "all") ||
+    (currentLevel && currentLevel !== "all") ||
+    (currentPrice && currentPrice !== "all") ||
+    (currentRating && currentRating !== "all")
 
   return (
     <div className="flex flex-wrap gap-4 items-center">
@@ -60,7 +63,7 @@ export function CourseFilters({ categories }: CourseFiltersProps) {
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.slug}>
                 {category.name}
@@ -78,7 +81,7 @@ export function CourseFilters({ categories }: CourseFiltersProps) {
           <SelectValue placeholder="Level" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Levels</SelectItem>
+          <SelectItem value="all">All Levels</SelectItem>
           {COURSE_LEVELS.map((level) => (
             <SelectItem key={level.value} value={level.value}>
               {level.label}
