@@ -7,6 +7,31 @@ import slugify from "slugify"
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
+    const slug = searchParams.get("slug")
+
+    // Fetch single course by slug
+    if (slug) {
+      const course = await prisma.course.findUnique({
+        where: { slug, status: "PUBLISHED" },
+        include: {
+          instructor: {
+            select: { id: true, name: true, image: true, headline: true },
+          },
+          category: true,
+        },
+      })
+
+      if (!course) {
+        return NextResponse.json(
+          { message: "Course not found" },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json({ course })
+    }
+
+    // Fetch multiple courses with pagination
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "12")
     const skip = (page - 1) * limit
