@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import { prisma } from "@/lib/prisma"
 import { CourseGrid } from "@/components/courses/course-grid"
-import { CourseFilters } from "@/components/courses/course-filters"
+import { CourseFiltersWrapper } from "@/components/courses/course-filters-wrapper"
 import { EmptyState } from "@/components/shared/empty-state"
 import { BookOpen } from "lucide-react"
 import { ITEMS_PER_PAGE } from "@/lib/constants"
@@ -128,7 +127,7 @@ async function getCourses(searchParams: CoursesPageProps["searchParams"]) {
 }
 
 async function getCategories() {
-  return prisma.category.findMany({
+  const categories = await prisma.category.findMany({
     select: {
       id: true,
       name: true,
@@ -136,6 +135,7 @@ async function getCategories() {
     },
     orderBy: { name: "asc" },
   })
+  return JSON.parse(JSON.stringify(categories))
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
@@ -154,9 +154,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       </div>
 
       <div className="mb-8">
-        <Suspense fallback={<div className="h-10 animate-pulse bg-muted rounded" />}>
-          <CourseFilters categories={categories} />
-        </Suspense>
+        <CourseFiltersWrapper categories={categories} />
       </div>
 
       {courses.length > 0 ? (
