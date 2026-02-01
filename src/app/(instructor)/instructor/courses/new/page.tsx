@@ -46,7 +46,8 @@ export default function CreateCoursePage() {
   })
 
   const form = useForm<CourseInput>({
-    resolver: zodResolver(courseSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       title: "",
       subtitle: "",

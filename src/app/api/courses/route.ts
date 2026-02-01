@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
     if (!validatedData.success) {
       return NextResponse.json(
-        { message: "Invalid input", errors: validatedData.error.errors },
+        { message: "Invalid input", errors: validatedData.error.issues },
         { status: 400 }
       )
     }
