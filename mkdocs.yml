@@ -1,0 +1,96 @@
+site_name: Learnify Documentation
+site_description: Documentation for Learnify - Modern Online Learning Platform
+site_author: Alfred Ang
+site_url: https://alfredang.github.io/Learnify/
+
+repo_name: alfredang/Learnify
+repo_url: https://github.com/alfredang/Learnify
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Configuration: getting-started/configuration.md
+    - Quick Start: getting-started/quick-start.md
+  - Features:
+    - Overview: features/overview.md
+    - For Students: features/students.md
+    - For Instructors: features/instructors.md
+    - For Administrators: features/administrators.md
+  - Architecture:
+    - Tech Stack: architecture/tech-stack.md
+    - Database Schema: architecture/database.md
+    - API Reference: architecture/api.md
+  - Deployment:
+    - Vercel: deployment/vercel.md
+    - Docker: deployment/docker.md
+    - Railway: deployment/railway.md
+  - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/alfredang
+  generator: false
+
+copyright: Copyright &copy; 2024 Alfred Ang
