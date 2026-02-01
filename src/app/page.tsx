@@ -111,7 +111,7 @@ export default async function HomePage() {
               </Badge>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 Unlock Your Potential with{" "}
-                <span className="text-primary">World-Class Learning</span>
+                <span className="text-primary">World-Class e-Learning</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0">
                 Join millions of learners worldwide. Master new skills, advance
