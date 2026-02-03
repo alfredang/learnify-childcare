@@ -92,7 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (trigger === "update") {
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id },
+          where: { id: token.id as string },
           select: { role: true },
         })
         if (dbUser) {
