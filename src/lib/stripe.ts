@@ -1,12 +1,20 @@
 import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-01-28.clover",
-  typescript: true,
-})
+let _stripe: Stripe | null = null
+
+export function getStripe() {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-01-28.clover",
+      typescript: true,
+    })
+  }
+  return _stripe
+}
 
 interface CreateCheckoutSessionParams {
   courseId: string
+  courseSlug: string
   courseName: string
   coursePrice: number
   courseImage?: string
@@ -16,13 +24,14 @@ interface CreateCheckoutSessionParams {
 
 export async function createCheckoutSession({
   courseId,
+  courseSlug,
   courseName,
   coursePrice,
   courseImage,
   userId,
   userEmail,
 }: CreateCheckoutSessionParams) {
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
     customer_email: userEmail,
@@ -43,8 +52,8 @@ export async function createCheckoutSession({
       courseId,
       userId,
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseId}/enroll?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseId}?canceled=true`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}/enroll?success=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}?canceled=true`,
   })
 
   return session

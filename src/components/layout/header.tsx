@@ -48,7 +48,11 @@ export function Header() {
         </Sheet>
 
         {/* Logo */}
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/" className="mr-6 flex items-center gap-2">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+            <circle cx="14" cy="14" r="14" className="fill-foreground" />
+            <path d="M8.5 19L14 7.5L19.5 19H8.5Z" className="fill-background" />
+          </svg>
           <span className="font-bold text-xl">Learnify</span>
         </Link>
 

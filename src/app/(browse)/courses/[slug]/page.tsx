@@ -4,12 +4,14 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
+import { formatPrice } from "@/lib/stripe"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { StarRating } from "@/components/shared/star-rating"
+import { MobileBottomBar } from "@/components/courses/mobile-bottom-bar"
 import {
   Play,
   Clock,
@@ -21,10 +23,14 @@ import {
   ChevronDown,
   FileText,
   Video,
+  HelpCircle,
+  Smartphone,
+  Infinity,
 } from "lucide-react"
 
 interface CoursePageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ canceled?: string }>
 }
 
 async function getCourse(slug: string) {
@@ -100,8 +106,8 @@ export async function generateMetadata({
   }
 }
 
-export default async function CoursePage({ params }: CoursePageProps) {
-  const { slug } = await params
+export default async function CoursePage({ params, searchParams }: CoursePageProps) {
+  const [{ slug }, { canceled }] = await Promise.all([params, searchParams])
   const course = await getCourse(slug)
 
   if (!course) {
@@ -133,167 +139,194 @@ export default async function CoursePage({ params }: CoursePageProps) {
   )
   const hours = Math.floor(totalDuration / 3600)
   const minutes = Math.floor((totalDuration % 3600) / 60)
+  const durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+
+  // Shared purchase card content
+  const purchaseCardContent = (
+    <>
+      <div className="relative aspect-video">
+        <Image
+          src={course.thumbnail || "/images/placeholder-course.jpg"}
+          alt={course.title}
+          fill
+          className="object-cover rounded-t-lg"
+        />
+        {course.previewVideoUrl && (
+          <button className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/60 transition-colors group">
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Play className="h-8 w-8 text-slate-900 ml-1" />
+            </div>
+          </button>
+        )}
+      </div>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-baseline gap-2">
+          {course.isFree ? (
+            <span className="text-3xl font-bold">Free</span>
+          ) : (
+            <>
+              <span className="text-3xl font-bold">
+                {formatPrice(discountPrice ?? price)}
+              </span>
+              {discountPrice && (
+                <span className="text-lg text-muted-foreground line-through">
+                  {formatPrice(price)}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        {isEnrolled ? (
+          <Button className="w-full" size="lg" asChild>
+            <Link href={`/my-courses/${course.id}`}>
+              Continue Learning
+            </Link>
+          </Button>
+        ) : isOwner ? (
+          <Button className="w-full" size="lg" asChild>
+            <Link href={`/instructor/courses/${course.id}`}>
+              Edit Course
+            </Link>
+          </Button>
+        ) : (
+          <Button className="w-full" size="lg" asChild>
+            <Link href={`/courses/${course.slug}/enroll`}>
+              {course.isFree ? "Enroll for Free" : "Buy Now"}
+            </Link>
+          </Button>
+        )}
+
+        {!isEnrolled && !isOwner && !course.isFree && (
+          <p className="text-xs text-center text-muted-foreground">
+            30-Day Money-Back Guarantee
+          </p>
+        )}
+
+        <Separator />
+
+        <div className="space-y-3 text-sm">
+          <h4 className="font-semibold">This course includes:</h4>
+          <div className="flex items-center gap-2">
+            <Video className="h-4 w-4 text-muted-foreground" />
+            <span>{durationText} of video</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span>{totalLectures} lectures</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <span>Access on mobile and desktop</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Infinity className="h-4 w-4 text-muted-foreground" />
+            <span>Full lifetime access</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Award className="h-4 w-4 text-muted-foreground" />
+            <span>Certificate of completion</span>
+          </div>
+        </div>
+      </CardContent>
+    </>
+  )
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
+      {/* Canceled payment banner */}
+      {canceled === "true" && (
+        <div className="bg-amber-50 border-b border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <div className="container py-3 text-center text-sm text-amber-800 dark:text-amber-200">
+            Payment was canceled. You can try again when you&apos;re ready.
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
-      <section className="bg-slate-900 text-white py-12">
+      <section className="bg-slate-900 text-white py-8 lg:py-12">
         <div className="container">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/categories/${course.category.slug}`}
-                  className="text-primary hover:underline"
-                >
-                  {course.category.name}
-                </Link>
+          <div className="lg:max-w-[63%] space-y-6">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/categories/${course.category.slug}`}
+                className="text-primary hover:underline"
+              >
+                {course.category.name}
+              </Link>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold">{course.title}</h1>
+
+            {course.subtitle && (
+              <p className="text-xl text-slate-300">{course.subtitle}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <StarRating rating={rating} size="sm" />
+                <span className="font-medium">{rating.toFixed(1)}</span>
+                <span className="text-slate-400">
+                  ({course._count.reviews.toLocaleString()} reviews)
+                </span>
               </div>
-
-              <h1 className="text-3xl md:text-4xl font-bold">{course.title}</h1>
-
-              {course.subtitle && (
-                <p className="text-xl text-slate-300">{course.subtitle}</p>
-              )}
-
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <StarRating rating={rating} size="sm" />
-                  <span className="font-medium">{rating.toFixed(1)}</span>
-                  <span className="text-slate-400">
-                    ({course._count.reviews.toLocaleString()} reviews)
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-300">
-                  <Users className="h-4 w-4" />
-                  <span>
-                    {course._count.enrollments.toLocaleString()} students
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={course.instructor.image || ""} />
-                  <AvatarFallback>
-                    {course.instructor.name?.[0] || "I"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm text-slate-400">Created by</p>
-                  <Link
-                    href={`/instructors/${course.instructor.id}`}
-                    className="hover:underline"
-                  >
-                    {course.instructor.name}
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>Last updated {course.updatedAt.toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Globe className="h-4 w-4" />
-                  <span>{course.language}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <BarChart className="h-4 w-4" />
-                  <span>{course.level.replace("_", " ")}</span>
-                </div>
+              <div className="flex items-center gap-1 text-slate-300">
+                <Users className="h-4 w-4" />
+                <span>
+                  {course._count.enrollments.toLocaleString()} students
+                </span>
               </div>
             </div>
 
-            {/* Sidebar Card */}
-            <div className="lg:row-start-1">
-              <Card className="sticky top-24">
-                <div className="relative aspect-video">
-                  <Image
-                    src={course.thumbnail || "/images/placeholder-course.jpg"}
-                    alt={course.title}
-                    fill
-                    className="object-cover rounded-t-lg"
-                  />
-                  {course.previewVideoUrl && (
-                    <button className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/60 transition-colors group">
-                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Play className="h-8 w-8 text-slate-900 ml-1" />
-                      </div>
-                    </button>
-                  )}
-                </div>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-baseline gap-2">
-                    {course.isFree ? (
-                      <span className="text-3xl font-bold">Free</span>
-                    ) : (
-                      <>
-                        <span className="text-3xl font-bold">
-                          ${discountPrice ?? price}
-                        </span>
-                        {discountPrice && (
-                          <span className="text-lg text-muted-foreground line-through">
-                            ${price}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={course.instructor.image || ""} />
+                <AvatarFallback>
+                  {course.instructor.name?.[0] || "I"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm text-slate-400">Created by</p>
+                <Link
+                  href={`/instructors/${course.instructor.id}`}
+                  className="hover:underline"
+                >
+                  {course.instructor.name}
+                </Link>
+              </div>
+            </div>
 
-                  {isEnrolled ? (
-                    <Button className="w-full" size="lg" asChild>
-                      <Link href={`/my-courses/${course.id}`}>
-                        Continue Learning
-                      </Link>
-                    </Button>
-                  ) : isOwner ? (
-                    <Button className="w-full" size="lg" asChild>
-                      <Link href={`/instructor/courses/${course.id}`}>
-                        Edit Course
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button className="w-full" size="lg" asChild>
-                      <Link href={`/courses/${course.slug}/enroll`}>
-                        {course.isFree ? "Enroll for Free" : "Buy Now"}
-                      </Link>
-                    </Button>
-                  )}
-
-                  <Separator />
-
-                  <div className="space-y-3 text-sm">
-                    <h4 className="font-semibold">This course includes:</h4>
-                    <div className="flex items-center gap-2">
-                      <Video className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} of
-                        video
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>{totalLectures} lectures</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-muted-foreground" />
-                      <span>Certificate of completion</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex flex-wrap gap-4 text-sm text-slate-300">
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Last updated {course.updatedAt.toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Globe className="h-4 w-4" />
+                <span>{course.language}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <BarChart className="h-4 w-4" />
+                <span>{course.level.replace("_", " ")}</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Course Content */}
-      <section className="py-12">
+      {/* Mobile Purchase Card */}
+      <div className="lg:hidden border-b">
+        <div className="container py-6">
+          <Card>{purchaseCardContent}</Card>
+        </div>
+      </div>
+
+      {/* Main Content + Desktop Sidebar */}
+      <section className="py-8 lg:py-12">
         <div className="container">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-12">
+          <div className="lg:grid lg:grid-cols-[1fr_340px] gap-12">
+            {/* Left column - course content */}
+            <div className="space-y-12">
               {/* What You'll Learn */}
               {course.learningOutcomes.length > 0 && (
                 <div>
@@ -320,9 +353,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
                 <h2 className="text-2xl font-bold mb-4">Course content</h2>
                 <div className="text-sm text-muted-foreground mb-4">
                   {course.sections.length} sections &bull; {totalLectures}{" "}
-                  lectures &bull;{" "}
-                  {hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} total
-                  length
+                  lectures &bull; {durationText} total length
                 </div>
                 <div className="border rounded-lg divide-y">
                   {course.sections.map((section) => (
@@ -345,6 +376,8 @@ export default async function CoursePage({ params }: CoursePageProps) {
                             <div className="flex items-center gap-2">
                               {lecture.type === "VIDEO" ? (
                                 <Play className="h-4 w-4 text-muted-foreground" />
+                              ) : lecture.type === "QUIZ" ? (
+                                <HelpCircle className="h-4 w-4 text-muted-foreground" />
                               ) : (
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                               )}
@@ -355,14 +388,18 @@ export default async function CoursePage({ params }: CoursePageProps) {
                                 </Badge>
                               )}
                             </div>
-                            {lecture.videoDuration && (
+                            {lecture.videoDuration ? (
                               <span className="text-sm text-muted-foreground">
                                 {Math.floor(lecture.videoDuration / 60)}:
                                 {(lecture.videoDuration % 60)
                                   .toString()
                                   .padStart(2, "0")}
                               </span>
-                            )}
+                            ) : lecture.type === "QUIZ" ? (
+                              <span className="text-sm text-muted-foreground">
+                                Quiz
+                              </span>
+                            ) : null}
                           </div>
                         ))}
                       </div>
@@ -469,9 +506,28 @@ export default async function CoursePage({ params }: CoursePageProps) {
                 </div>
               )}
             </div>
+
+            {/* Desktop Sidebar - sticky, pulled up into hero */}
+            <div className="hidden lg:block">
+              <div className="sticky top-20 -mt-96">
+                <Card className="shadow-lg overflow-hidden">
+                  {purchaseCardContent}
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Mobile Fixed Bottom Bar */}
+      {!isEnrolled && !isOwner && (
+        <MobileBottomBar
+          courseSlug={course.slug}
+          price={price}
+          discountPrice={discountPrice}
+          isFree={course.isFree}
+        />
+      )}
     </div>
   )
 }

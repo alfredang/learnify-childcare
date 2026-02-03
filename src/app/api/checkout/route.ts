@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     // Create Stripe checkout session for paid courses
     const checkoutSession = await createCheckoutSession({
       courseId,
+      courseSlug: course.slug,
       courseName: course.title,
       coursePrice: Number(course.price),
       courseImage: course.thumbnail || undefined,
