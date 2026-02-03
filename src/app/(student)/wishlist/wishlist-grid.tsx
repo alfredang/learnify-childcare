@@ -14,10 +14,12 @@ import type { WishlistCourse } from "@/types"
 
 interface WishlistGridProps {
   initialItems: WishlistCourse[]
+  enrolledCourseIds: string[]
 }
 
-export function WishlistGrid({ initialItems }: WishlistGridProps) {
+export function WishlistGrid({ initialItems, enrolledCourseIds }: WishlistGridProps) {
   const [items, setItems] = useState(initialItems)
+  const enrolledSet = new Set(enrolledCourseIds)
 
   if (items.length === 0) {
     return (
@@ -37,6 +39,7 @@ export function WishlistGrid({ initialItems }: WishlistGridProps) {
         <WishlistCard
           key={item.id}
           item={item}
+          isEnrolled={enrolledSet.has(item.course.id)}
           onRemove={(id) => setItems((prev) => prev.filter((i) => i.id !== id))}
         />
       ))}
@@ -46,10 +49,11 @@ export function WishlistGrid({ initialItems }: WishlistGridProps) {
 
 interface WishlistCardProps {
   item: WishlistCourse
+  isEnrolled: boolean
   onRemove: (id: string) => void
 }
 
-function WishlistCard({ item, onRemove }: WishlistCardProps) {
+function WishlistCard({ item, isEnrolled, onRemove }: WishlistCardProps) {
   const [isPending, startTransition] = useTransition()
   const course = item.course
   const price = Number(course.price)
@@ -126,11 +130,19 @@ function WishlistCard({ item, onRemove }: WishlistCardProps) {
           )}
         </div>
         <div className="flex gap-2 pt-1">
-          <Button className="flex-1" asChild>
-            <Link href={`/courses/${course.slug}/enroll`}>
-              {course.isFree ? "Enroll for Free" : "Enroll Now"}
-            </Link>
-          </Button>
+          {isEnrolled ? (
+            <Button className="flex-1" asChild>
+              <Link href={`/my-courses/${course.id}`}>
+                Continue Learning
+              </Link>
+            </Button>
+          ) : (
+            <Button className="flex-1" asChild>
+              <Link href={`/courses/${course.slug}/enroll`}>
+                {course.isFree ? "Enroll for Free" : "Enroll Now"}
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"
