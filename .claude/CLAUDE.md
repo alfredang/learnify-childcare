@@ -107,13 +107,13 @@ learnify/
 │   │   ├── global-error.tsx       # Root error boundary
 │   │   ├── (auth)/                # Auth pages: login, register, forgot-password
 │   │   ├── (browse)/              # Public pages: courses, categories, search, about
-│   │   ├── (student)/             # Student pages: my-courses, account, certificates
+│   │   ├── (student)/             # Student pages: my-courses, lecture viewer, account, certificates
 │   │   ├── (instructor)/          # Instructor pages: dashboard, course management
 │   │   ├── (admin)/               # Admin pages: dashboard, users, courses
 │   │   └── api/                   # API routes (REST endpoints)
 │   ├── components/
 │   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons
-│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters
+│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, VideoPlayer, LectureSidebar, QuizPlayer, QuizBuilder, VideoUpload
 │   │   ├── layout/                # Header, Footer, MobileNav, UserMenu
 │   │   ├── shared/                # EmptyState, LoadingSpinner, StarRating
 │   │   └── ui/                    # 42+ shadcn/ui components (Radix-based)
@@ -180,6 +180,7 @@ External Services:
 | `/api/certificates/generate` | POST | Yes | Generate completion certificate |
 | `/api/certificates/[id]/download` | GET | Yes | Download certificate |
 | `/api/invoices/[id]` | GET | Yes | Get invoice details |
+| `/api/lectures/[lectureId]/progress` | POST | Yes | Update lecture progress (position, completion) |
 
 ### Database Models
 
@@ -271,6 +272,8 @@ Key models in `prisma/schema.prisma`:
 8. **Route groups** `(auth)`, `(browse)`, `(student)`, `(instructor)`, `(admin)` have their own layouts. The parentheses mean they don't affect the URL path.
 9. **ITEMS_PER_PAGE** is `12` (defined in `src/lib/constants.ts`). Use this constant for all pagination.
 10. **Cloudinary public IDs** are stored in `videoPublicId` on Lecture model for deletion/management.
+11. **Lecture viewer** at `/my-courses/[courseId]/lectures/[lectureId]` uses a server page (`page.tsx`) that fetches data and passes serialized props to a client `LectureViewer` component. Progress is saved via `POST /api/lectures/[lectureId]/progress` which also recalculates enrollment percentage.
+12. **Quiz data** is stored as JSON in `Lecture.content` using the `QuizData` type (version 1). The `QuizPlayer` component parses, renders, grades, and supports retries. Open-ended questions are not auto-graded.
 
 ---
 
