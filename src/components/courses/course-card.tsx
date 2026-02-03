@@ -5,20 +5,23 @@ import { Badge } from "@/components/ui/badge"
 import { StarRating } from "@/components/shared/star-rating"
 import { Users } from "lucide-react"
 import { formatPrice } from "@/lib/stripe"
+import { WishlistButton } from "@/components/courses/wishlist-button"
 import type { CourseWithInstructor } from "@/types"
 
 interface CourseCardProps {
   course: CourseWithInstructor
+  isWishlisted?: boolean
+  showWishlist?: boolean
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, isWishlisted, showWishlist = true }: CourseCardProps) {
   const price = Number(course.price)
   const discountPrice = course.discountPrice ? Number(course.discountPrice) : null
   const rating = Number(course.averageRating)
 
   return (
     <Link href={`/courses/${course.slug}`}>
-      <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">
+      <Card className="group h-full overflow-hidden transition-shadow hover:shadow-lg">
         <div className="relative aspect-video">
           <Image
             src={course.thumbnail || "/images/placeholder-course.jpg"}
@@ -27,11 +30,16 @@ export function CourseCard({ course }: CourseCardProps) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+          {showWishlist && (
+            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+              <WishlistButton courseId={course.id} initialWishlisted={isWishlisted} />
+            </div>
+          )}
           {course.isFree && (
             <Badge className="absolute top-2 left-2 bg-green-500">Free</Badge>
           )}
           {course.isFeatured && (
-            <Badge className="absolute top-2 right-2 bg-yellow-500">
+            <Badge className="absolute bottom-2 left-2 bg-yellow-500">
               Bestseller
             </Badge>
           )}

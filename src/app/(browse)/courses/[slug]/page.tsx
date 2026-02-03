@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { StarRating } from "@/components/shared/star-rating"
 import { MobileBottomBar } from "@/components/courses/mobile-bottom-bar"
+import { WishlistButton } from "@/components/courses/wishlist-button"
 import {
   Play,
   Clock,
@@ -90,6 +91,18 @@ async function checkEnrollment(courseId: string, userId?: string) {
   return !!enrollment
 }
 
+async function checkWishlist(courseId: string, userId?: string) {
+  if (!userId) return false
+
+  const item = await prisma.wishlist.findUnique({
+    where: {
+      userId_courseId: { userId, courseId },
+    },
+  })
+
+  return !!item
+}
+
 export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
@@ -115,7 +128,10 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   const session = await auth()
-  const isEnrolled = await checkEnrollment(course.id, session?.user?.id)
+  const [isEnrolled, isWishlisted] = await Promise.all([
+    checkEnrollment(course.id, session?.user?.id),
+    checkWishlist(course.id, session?.user?.id),
+  ])
   const isOwner = session?.user?.id === course.instructorId
 
   const price = Number(course.price)
@@ -195,6 +211,14 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
               {course.isFree ? "Enroll for Free" : "Buy Now"}
             </Link>
           </Button>
+        )}
+
+        {!isEnrolled && !isOwner && (
+          <WishlistButton
+            courseId={course.id}
+            initialWishlisted={isWishlisted}
+            variant="full"
+          />
         )}
 
         {!isEnrolled && !isOwner && !course.isFree && (

@@ -17,6 +17,19 @@ async function searchCourses(query: string) {
   return response.json()
 }
 
+async function fetchWishlistedIds(): Promise<Set<string>> {
+  try {
+    const res = await fetch("/api/wishlist")
+    if (!res.ok) return new Set()
+    const data = await res.json()
+    return new Set(
+      data.wishlist?.map((item: { course: { id: string } }) => item.course.id) ?? []
+    )
+  } catch {
+    return new Set()
+  }
+}
+
 function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -31,6 +44,11 @@ function SearchContent() {
     queryKey: ["search", query],
     queryFn: () => searchCourses(query),
     enabled: !!query,
+  })
+
+  const { data: wishlistedCourseIds } = useQuery({
+    queryKey: ["wishlist-ids"],
+    queryFn: fetchWishlistedIds,
   })
 
   const handleSearch = (e: React.FormEvent) => {
@@ -90,7 +108,7 @@ function SearchContent() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : data?.courses?.length > 0 ? (
-          <CourseGrid courses={data.courses} />
+          <CourseGrid courses={data.courses} wishlistedCourseIds={wishlistedCourseIds} />
         ) : query ? (
           <div className="text-center py-12">
             <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

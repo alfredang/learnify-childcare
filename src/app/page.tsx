@@ -17,6 +17,8 @@ import {
   Award,
 } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { getWishlistedCourseIds } from "@/lib/wishlist"
 import { CourseGrid } from "@/components/courses/course-grid"
 
 const iconMap: Record<string, React.ElementType> = {
@@ -93,11 +95,13 @@ async function getStats() {
 }
 
 export default async function HomePage() {
-  const [featuredCourses, categories, stats] = await Promise.all([
+  const [featuredCourses, categories, stats, session] = await Promise.all([
     getFeaturedCourses(),
     getCategories(),
     getStats(),
+    auth(),
   ])
+  const wishlistedCourseIds = await getWishlistedCourseIds(session?.user?.id)
 
   return (
     <div className="flex flex-col">
@@ -265,7 +269,7 @@ export default async function HomePage() {
                 <Link href="/courses">View All</Link>
               </Button>
             </div>
-            <CourseGrid courses={featuredCourses} />
+            <CourseGrid courses={featuredCourses} wishlistedCourseIds={wishlistedCourseIds} />
           </div>
         </section>
       )}

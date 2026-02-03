@@ -85,6 +85,12 @@ export interface CourseFilters {
   page?: number
 }
 
+export type WishlistCourse = {
+  id: string
+  createdAt: Date
+  course: CourseWithInstructor
+}
+
 export interface ApiError {
   message: string
   code?: string
