@@ -31,6 +31,7 @@ import {
   HelpCircle,
   Smartphone,
   Infinity,
+  Eye,
 } from "lucide-react"
 
 interface CoursePageProps {
@@ -38,9 +39,10 @@ interface CoursePageProps {
   searchParams: Promise<{ canceled?: string }>
 }
 
-async function getCourse(slug: string) {
+async function getCourse(slug: string, userId?: string) {
   try {
-    const course = await prisma.course.findUnique({
+    // First try published course (public access)
+    let course = await prisma.course.findUnique({
       where: { slug, status: "PUBLISHED" },
       include: {
         instructor: {
@@ -74,6 +76,44 @@ async function getCourse(slug: string) {
         },
       },
     })
+
+    // If not published, allow the course owner to preview
+    if (!course && userId) {
+      course = await prisma.course.findUnique({
+        where: { slug, instructorId: userId },
+        include: {
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              headline: true,
+              bio: true,
+              _count: {
+                select: {
+                  courses: { where: { status: "PUBLISHED" } },
+                },
+              },
+            },
+          },
+          category: true,
+          sections: {
+            orderBy: { position: "asc" },
+            include: {
+              lectures: {
+                orderBy: { position: "asc" },
+              },
+            },
+          },
+          _count: {
+            select: {
+              enrollments: true,
+              reviews: { where: { isApproved: true } },
+            },
+          },
+        },
+      })
+    }
 
     return course
   } catch (error) {
@@ -175,7 +215,8 @@ export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
   const { slug } = await params
-  const course = await getCourse(slug)
+  const session = await auth()
+  const course = await getCourse(slug, session?.user?.id)
 
   if (!course) {
     return { title: "Course Not Found" }
@@ -189,13 +230,15 @@ export async function generateMetadata({
 
 export default async function CoursePage({ params, searchParams }: CoursePageProps) {
   const [{ slug }, { canceled }] = await Promise.all([params, searchParams])
-  const course = await getCourse(slug)
+  const session = await auth()
+  const course = await getCourse(slug, session?.user?.id)
 
   if (!course) {
     notFound()
   }
 
-  const session = await auth()
+  const isOwnerPreview = course.status !== "PUBLISHED" && course.instructorId === session?.user?.id
+
   const [isEnrolled, isFavourited, isInCart, reviewData, userReview] =
     await Promise.all([
       checkEnrollment(course.id, session?.user?.id),
@@ -288,7 +331,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
               initialInCart={isInCart}
               variant="full"
             />
-            <BuyNowButton courseId={course.id} isFree={false} />
+            <BuyNowButton courseId={course.id} isFree={false} expectedPrice={discountPrice ?? price} />
           </>
         )}
 
@@ -337,6 +380,24 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   return (
     <div className="min-h-screen pb-20 lg:pb-0">
+      {/* Owner preview banner */}
+      {isOwnerPreview && (
+        <div className="bg-blue-50 border-b border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
+          <div className="container py-3 flex items-center justify-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+            <Eye className="h-4 w-4" />
+            <span>
+              You are previewing this course. It is currently{" "}
+              <strong>{course.status.replace("_", " ").toLowerCase()}</strong> and not visible to students.
+            </span>
+            <Button variant="outline" size="sm" className="ml-2 h-7 text-xs" asChild>
+              <Link href={`/instructor/courses/${course.id}`}>
+                Back to Editor
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Canceled payment banner */}
       {canceled === "true" && (
         <div className="bg-amber-50 border-b border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">

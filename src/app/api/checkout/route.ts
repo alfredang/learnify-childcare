@@ -15,7 +15,12 @@ export async function POST(request: Request) {
 
     // Cart checkout (multiple courses)
     if (body.cartCheckout && body.courseIds) {
-      return handleCartCheckout(body.courseIds, session.user.id, session.user.email!)
+      return handleCartCheckout(
+        body.courseIds,
+        session.user.id,
+        session.user.email!,
+        body.expectedPrices
+      )
     }
 
     // Single course checkout (existing flow)
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const course = await prisma.course.findUnique({
-      where: { id: courseId, status: "PUBLISHED" },
+      where: { id: courseId },
     })
 
     if (!course) {
@@ -37,6 +42,22 @@ export async function POST(request: Request) {
         { message: "Course not found" },
         { status: 404 }
       )
+    }
+
+    // Validate price hasn't changed since the student loaded the page
+    if (body.expectedPrice !== undefined && !course.isFree) {
+      const currentPrice = course.discountPrice
+        ? Number(course.discountPrice)
+        : Number(course.price)
+      if (Math.abs(currentPrice - body.expectedPrice) > 0.01) {
+        return NextResponse.json(
+          {
+            message: "The price has changed since you loaded this page",
+            code: "PRICE_CHANGED",
+          },
+          { status: 409 }
+        )
+      }
     }
 
     // Check if already enrolled
@@ -99,7 +120,12 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleCartCheckout(courseIds: string[], userId: string, userEmail: string) {
+async function handleCartCheckout(
+  courseIds: string[],
+  userId: string,
+  userEmail: string,
+  expectedPrices?: Record<string, number>
+) {
   if (!Array.isArray(courseIds) || courseIds.length === 0) {
     return NextResponse.json(
       { message: "No courses provided" },
@@ -107,11 +133,10 @@ async function handleCartCheckout(courseIds: string[], userId: string, userEmail
     )
   }
 
-  // Fetch all courses
+  // Fetch all courses (allow unpublished — student may have added before it was unpublished)
   const courses = await prisma.course.findMany({
     where: {
       id: { in: courseIds },
-      status: "PUBLISHED",
     },
   })
 
@@ -120,6 +145,27 @@ async function handleCartCheckout(courseIds: string[], userId: string, userEmail
       { message: "No valid courses found" },
       { status: 404 }
     )
+  }
+
+  // Validate prices haven't changed since the student loaded their cart
+  if (expectedPrices && Object.keys(expectedPrices).length > 0) {
+    for (const course of courses) {
+      if (course.isFree) continue
+      const expected = expectedPrices[course.id]
+      if (expected === undefined) continue
+      const currentPrice = course.discountPrice
+        ? Number(course.discountPrice)
+        : Number(course.price)
+      if (Math.abs(currentPrice - expected) > 0.01) {
+        return NextResponse.json(
+          {
+            message: "Course prices have changed since you loaded your cart",
+            code: "PRICE_CHANGED",
+          },
+          { status: 409 }
+        )
+      }
+    }
   }
 
   // Check for existing enrollments

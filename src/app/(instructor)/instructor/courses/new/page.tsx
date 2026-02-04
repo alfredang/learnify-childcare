@@ -8,7 +8,6 @@ import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -26,6 +25,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { RichTextEditor } from "@/components/shared/rich-text-editor"
+import { ArrayFieldEditor } from "@/components/shared/array-field-editor"
+import { ImageUpload } from "@/components/courses/image-upload"
 import { courseSchema, type CourseInput } from "@/lib/validations/course"
 import { COURSE_LEVELS } from "@/lib/constants"
 import { useQuery } from "@tanstack/react-query"
@@ -39,6 +42,7 @@ async function getCategories() {
 export default function CreateCoursePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -57,6 +61,9 @@ export default function CreateCoursePage() {
       language: "English",
       price: 0,
       isFree: false,
+      learningOutcomes: [],
+      requirements: [],
+      targetAudience: [],
     },
   })
 
@@ -67,7 +74,10 @@ export default function CreateCoursePage() {
       const response = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          thumbnail: thumbnailUrl,
+        }),
       })
 
       if (!response.ok) {
@@ -117,7 +127,7 @@ export default function CreateCoursePage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Choose a clear, descriptive title
+                      A clear, descriptive title (5-100 characters)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -132,78 +142,80 @@ export default function CreateCoursePage() {
                     <FormLabel>Subtitle</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., Learn to build modern web applications"
+                        placeholder="e.g., Learn to build modern web applications from scratch"
                         disabled={isLoading}
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      A brief description of what students will learn
+                      A brief summary shown below the title
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map(
-                          (category: { id: string; name: string }) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map(
+                            (category: { id: string; name: string }) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Level</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {COURSE_LEVELS.map((level) => (
-                          <SelectItem key={level.value} value={level.value}>
-                            {level.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COURSE_LEVELS.map((level) => (
+                            <SelectItem key={level.value} value={level.value}>
+                              {level.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -212,11 +224,11 @@ export default function CreateCoursePage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Describe your course in detail..."
-                        className="min-h-[150px]"
+                      <RichTextEditor
+                        content={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Describe your course in detail. What will students learn? What makes this course unique?"
                         disabled={isLoading}
-                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -224,28 +236,91 @@ export default function CreateCoursePage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price (USD)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Set to 0 for a free course
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (USD)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Set to 0 for a free course
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Language</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="English"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Thumbnail */}
+              <FormItem>
+                <FormLabel>Course Thumbnail</FormLabel>
+                <FormDescription>
+                  Upload an eye-catching image. Recommended: 750x422px (16:9
+                  ratio)
+                </FormDescription>
+                <ImageUpload
+                  onUploadComplete={({ imageUrl }) => setThumbnailUrl(imageUrl)}
+                  existingImageUrl={thumbnailUrl}
+                  disabled={isLoading}
+                />
+              </FormItem>
+
+              <Separator />
+
+              {/* Learning Outcomes */}
+              <ArrayFieldEditor
+                form={form}
+                name="learningOutcomes"
+                label="What students will learn"
+                placeholder="e.g., Build full-stack web applications"
+                disabled={isLoading}
+              />
+
+              {/* Requirements */}
+              <ArrayFieldEditor
+                form={form}
+                name="requirements"
+                label="Requirements"
+                placeholder="e.g., Basic knowledge of HTML and CSS"
+                disabled={isLoading}
+              />
+
+              {/* Target Audience */}
+              <ArrayFieldEditor
+                form={form}
+                name="targetAudience"
+                label="Who this course is for"
+                placeholder="e.g., Beginner web developers"
+                disabled={isLoading}
               />
 
               <div className="flex gap-4">

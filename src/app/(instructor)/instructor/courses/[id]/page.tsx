@@ -14,6 +14,8 @@ import {
   Eye,
   Settings,
   BookOpen,
+  Globe,
+  EyeOff,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,6 +43,8 @@ import { Separator } from "@/components/ui/separator"
 import { courseSchema, type CourseInput } from "@/lib/validations/course"
 import { COURSE_LEVELS } from "@/lib/constants"
 import { CourseContentEditor } from "@/components/courses/course-content-editor"
+import { ImageUpload } from "@/components/courses/image-upload"
+import { ArrayFieldEditor } from "@/components/shared/array-field-editor"
 
 async function fetchCourse(id: string) {
   const res = await fetch(`/api/courses/${id}`)
@@ -72,6 +76,7 @@ export default function CourseEditorPage() {
   const courseId = params.id as string
 
   const [isSaving, setIsSaving] = useState(false)
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
 
   const {
     data: courseData,
@@ -123,6 +128,7 @@ export default function CourseEditorPage() {
         requirements: course.requirements || [],
         targetAudience: course.targetAudience || [],
       })
+      setThumbnailUrl(course.thumbnail || null)
     }
   }, [course, form])
 
@@ -132,7 +138,10 @@ export default function CourseEditorPage() {
       const res = await fetch(`/api/courses/${courseId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          thumbnail: thumbnailUrl,
+        }),
       })
 
       if (!res.ok) {
@@ -145,6 +154,33 @@ export default function CourseEditorPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update course"
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function toggleStatus(newStatus: string) {
+    setIsSaving(true)
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to update status")
+      }
+      await queryClient.invalidateQueries({ queryKey: ["course", courseId] })
+      toast.success(
+        newStatus === "PUBLISHED"
+          ? "Course published successfully"
+          : "Course unpublished"
+      )
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update status"
       )
     } finally {
       setIsSaving(false)
@@ -212,12 +248,30 @@ export default function CourseEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {course.status === "PUBLISHED" && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/courses/${course.slug}`}>
-                <Eye className="h-4 w-4 mr-2" />
-                View Live
-              </Link>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/courses/${course.slug}`}>
+              <Eye className="h-4 w-4 mr-2" />
+              {course.status === "PUBLISHED" ? "View Live" : "Preview"}
+            </Link>
+          </Button>
+          {course.status === "PUBLISHED" ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toggleStatus("DRAFT")}
+              disabled={isSaving}
+            >
+              <EyeOff className="h-4 w-4 mr-2" />
+              Unpublish
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => toggleStatus("PUBLISHED")}
+              disabled={isSaving}
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              Publish
             </Button>
           )}
         </div>
@@ -300,6 +354,7 @@ export default function CourseEditorPage() {
                         <FormItem>
                           <FormLabel>Category</FormLabel>
                           <Select
+                            key={categories.length}
                             onValueChange={field.onChange}
                             value={field.value}
                             disabled={isSaving}
@@ -420,6 +475,22 @@ export default function CourseEditorPage() {
                     />
                   </div>
 
+                  {/* Thumbnail */}
+                  <FormItem>
+                    <FormLabel>Course Thumbnail</FormLabel>
+                    <FormDescription>
+                      Upload an eye-catching image. Recommended: 750x422px (16:9
+                      ratio)
+                    </FormDescription>
+                    <ImageUpload
+                      onUploadComplete={({ imageUrl }) =>
+                        setThumbnailUrl(imageUrl)
+                      }
+                      existingImageUrl={thumbnailUrl}
+                      disabled={isSaving}
+                    />
+                  </FormItem>
+
                   <Separator />
 
                   {/* Learning Outcomes */}
@@ -481,92 +552,6 @@ export default function CourseEditorPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Array field editor — reusable for outcomes, requirements, audience */
-/* ------------------------------------------------------------------ */
-
-function ArrayFieldEditor({
-  form,
-  name,
-  label,
-  placeholder,
-  disabled,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: any
-  name: "learningOutcomes" | "requirements" | "targetAudience"
-  label: string
-  placeholder: string
-  disabled: boolean
-}) {
-  const values: string[] = form.watch(name) || []
-  const [inputValue, setInputValue] = useState("")
-
-  function addItem() {
-    const trimmed = inputValue.trim()
-    if (!trimmed) return
-    form.setValue(name, [...values, trimmed])
-    setInputValue("")
-  }
-
-  function removeItem(index: number) {
-    form.setValue(
-      name,
-      values.filter((_: string, i: number) => i !== index)
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <FormLabel>{label}</FormLabel>
-      <div className="flex gap-2">
-        <Input
-          placeholder={placeholder}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault()
-              addItem()
-            }
-          }}
-          disabled={disabled}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={addItem}
-          disabled={disabled || !inputValue.trim()}
-        >
-          Add
-        </Button>
-      </div>
-      {values.length > 0 && (
-        <ul className="space-y-2">
-          {values.map((item: string, index: number) => (
-            <li
-              key={index}
-              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-            >
-              <span>{item}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-muted-foreground hover:text-destructive"
-                onClick={() => removeItem(index)}
-                disabled={disabled}
-              >
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

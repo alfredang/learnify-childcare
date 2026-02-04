@@ -42,7 +42,7 @@ async function getCategories() {
     const categories = await prisma.category.findMany({
       include: {
         _count: {
-          select: { courses: true },
+          select: { courses: { where: { status: "PUBLISHED" } } },
         },
       },
       orderBy: {

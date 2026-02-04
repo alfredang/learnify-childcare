@@ -91,8 +91,18 @@ export async function POST(request: Request) {
       )
     }
 
-    const { title, subtitle, description, categoryId, level, price } =
-      validatedData.data
+    const {
+      title,
+      subtitle,
+      description,
+      categoryId,
+      level,
+      price,
+      language,
+      learningOutcomes,
+      requirements,
+      targetAudience,
+    } = validatedData.data
 
     // Generate unique slug
     let slug = slugify(title, { lower: true, strict: true })
@@ -109,9 +119,14 @@ export async function POST(request: Request) {
         description,
         categoryId,
         level,
-        price: Math.round(price * 100), // Store in cents
+        price,
         isFree: price === 0,
         instructorId: session.user.id,
+        language: language || "English",
+        learningOutcomes: learningOutcomes || [],
+        requirements: requirements || [],
+        targetAudience: targetAudience || [],
+        ...(body.thumbnail !== undefined && { thumbnail: body.thumbnail }),
       },
     })
 

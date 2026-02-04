@@ -103,6 +103,7 @@ export default async function HomePage() {
     getStats(),
     auth(),
   ])
+  const isInstructor = session?.user?.role === "INSTRUCTOR" || session?.user?.role === "ADMIN"
   let favouritedCourseIds = new Set<string>()
   let cartCourseIds = new Set<string>()
   let enrolledCourseMap = new Map<string, number>()
@@ -128,7 +129,7 @@ export default async function HomePage() {
               </Badge>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 Unlock Your Potential with{" "}
-                <span className="text-primary">World-Class e-Learning</span>
+                <span className="text-primary">World&#8209;Class e&#8209;Learning</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0">
                 Join millions of learners worldwide. Master new skills, advance
@@ -143,8 +144,8 @@ export default async function HomePage() {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground" asChild>
-                  <Link href="/become-instructor">
-                    Become an Instructor
+                  <Link href={isInstructor ? "/instructor" : "/become-instructor"}>
+                    {isInstructor ? "Go to Instructor Dashboard" : "Become an Instructor"}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
@@ -303,8 +304,8 @@ export default async function HomePage() {
                 engaging courses and earn money doing what you love.
               </p>
               <button className="inline-flex items-center justify-center gap-3 rounded-xl bg-white text-primary font-extrabold text-lg md:text-xl px-10 md:px-14 py-5 md:py-6 shadow-lg shadow-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-white/20 active:scale-100">
-                <Link href="/become-instructor" className="flex items-center gap-3">
-                  Start Teaching Today
+                <Link href={isInstructor ? "/instructor" : "/become-instructor"} className="flex items-center gap-3">
+                  {isInstructor ? "Go to Instructor Dashboard" : "Start Teaching Today"}
                   <ArrowRight className="h-6 w-6" />
                 </Link>
               </button>

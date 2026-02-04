@@ -15,13 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { EmptyState } from "@/components/shared/empty-state"
-import { Plus, BookOpen, MoreHorizontal, Pencil, Eye, Trash } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Plus, BookOpen, Pencil } from "lucide-react"
+import { DeleteCourseButton } from "./delete-course-button"
 
 export const metadata: Metadata = {
   title: "My Courses",
@@ -90,7 +85,7 @@ export default async function InstructorCoursesPage() {
                 <TableHead>Price</TableHead>
                 <TableHead>Students</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -137,33 +132,19 @@ export default async function InstructorCoursesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/instructor/courses/${course.id}`}>
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        {course.status === "PUBLISHED" && (
-                          <DropdownMenuItem asChild>
-                            <Link href={`/courses/${course.slug}`}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link href={`/instructor/courses/${course.id}`}>
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                      </Button>
+                      <DeleteCourseButton
+                        courseId={course.id}
+                        courseTitle={course.title}
+                        hasEnrollments={course._count.enrollments > 0}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

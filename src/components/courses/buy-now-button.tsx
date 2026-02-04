@@ -11,12 +11,14 @@ import { useRouter } from "next/navigation"
 interface BuyNowButtonProps {
   courseId: string
   isFree: boolean
+  expectedPrice?: number
   className?: string
 }
 
 export function BuyNowButton({
   courseId,
   isFree,
+  expectedPrice,
   className,
 }: BuyNowButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
@@ -37,12 +39,16 @@ export function BuyNowButton({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ courseId, expectedPrice }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
+        if (data.code === "PRICE_CHANGED") {
+          toast.error("The price has changed. Please refresh the page.")
+          return
+        }
         throw new Error(data.message || "Failed to process")
       }
 

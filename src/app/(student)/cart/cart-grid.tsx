@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { StarRating } from "@/components/shared/star-rating"
 import { EmptyState } from "@/components/shared/empty-state"
-import { ShoppingCart, Trash2, Users, Loader2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ShoppingCart, Trash2, Users, Loader2, AlertTriangle } from "lucide-react"
 import { formatPrice } from "@/lib/stripe"
 import { toast } from "sonner"
 import type { CartItemCourse } from "@/types"
@@ -41,9 +42,31 @@ export function CartGrid({ initialItems, enrolledCourseIds }: CartGridProps) {
 
   const paidItems = validItems.filter((item) => !item.course.isFree)
   const freeItems = validItems.filter((item) => item.course.isFree)
+  const hasUnpublished = validItems.some((item) => item.course.status !== "PUBLISHED")
+
+  async function refreshCartPrices() {
+    try {
+      const res = await fetch("/api/cart")
+      if (!res.ok) return
+      const data = await res.json()
+      setItems(data.cartItems)
+    } catch {
+      // silent — page can be reloaded manually
+    }
+  }
 
   async function handleCheckout() {
     if (paidItems.length === 0 && freeItems.length === 0) return
+
+    // Build expected prices so the API can validate nothing changed
+    const expectedPrices: Record<string, number> = {}
+    for (const item of validItems) {
+      if (!item.course.isFree) {
+        expectedPrices[item.course.id] = item.course.discountPrice
+          ? Number(item.course.discountPrice)
+          : Number(item.course.price)
+      }
+    }
 
     setIsCheckingOut(true)
     try {
@@ -53,12 +76,20 @@ export function CartGrid({ initialItems, enrolledCourseIds }: CartGridProps) {
         body: JSON.stringify({
           cartCheckout: true,
           courseIds: validItems.map((item) => item.course.id),
+          expectedPrices,
         }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
+        // Price changed — refresh cart to show new prices
+        if (data.code === "PRICE_CHANGED") {
+          toast.error("Some course prices have changed. Please review the updated prices.")
+          await refreshCartPrices()
+          setIsCheckingOut(false)
+          return
+        }
         throw new Error(data.message || "Failed to create checkout session")
       }
 
@@ -156,6 +187,15 @@ export function CartGrid({ initialItems, enrolledCourseIds }: CartGridProps) {
 
             <Separator />
 
+            {hasUnpublished && (
+              <div className="flex gap-2 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-200">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  Some courses in your cart have been unpublished by the instructor. You may still purchase them, but content updates are not guaranteed.
+                </span>
+              </div>
+            )}
+
             <Button
               className="w-full"
               size="lg"
@@ -234,11 +274,19 @@ function CartItemCard({ item, onRemove }: CartItemCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex justify-between gap-2">
               <div className="min-w-0">
-                <Link href={`/courses/${course.slug}`}>
-                  <h3 className="font-semibold line-clamp-2 hover:text-primary">
-                    {course.title}
-                  </h3>
-                </Link>
+                <div className="flex items-start gap-2">
+                  <Link href={`/courses/${course.slug}`} className="min-w-0">
+                    <h3 className="font-semibold line-clamp-2 hover:text-primary">
+                      {course.title}
+                    </h3>
+                  </Link>
+                  {course.status !== "PUBLISHED" && (
+                    <Badge variant="outline" className="flex-shrink-0 px-2 py-0.5 text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-200 dark:border-amber-800 dark:bg-amber-950/20">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Unpublished
+                    </Badge>
+                  )}
+                </div>
                 <Link
                   href={`/instructors/${course.instructor.id}`}
                   className="text-sm text-muted-foreground mt-1 hover:text-primary hover:underline inline-block"
