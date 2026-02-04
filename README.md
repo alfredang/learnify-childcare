@@ -4,10 +4,10 @@
 
 ### Modern Online Learning Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-5.0-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 [![Stripe](https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
@@ -42,6 +42,7 @@
 | 📚 Courses | [/courses](https://learnify-corporate-training-platform.netlify.app/courses) | Browse all courses |
 | 📂 Categories | [/categories](https://learnify-corporate-training-platform.netlify.app/categories) | Browse course categories |
 | 🔍 Search | [/search](https://learnify-corporate-training-platform.netlify.app/search) | Search for courses |
+| 🛒 Cart | [/cart](https://learnify-corporate-training-platform.netlify.app/cart) | Shopping cart |
 | ℹ️ About | [/about](https://learnify-corporate-training-platform.netlify.app/about) | About the platform |
 | 👨‍🏫 Become Instructor | [/become-instructor](https://learnify-corporate-training-platform.netlify.app/become-instructor) | Instructor signup page |
 | 🔐 Login | [/login](https://learnify-corporate-training-platform.netlify.app/login) | User login |
@@ -58,12 +59,14 @@
 ### 👨‍🎓 For Students
 - 🔍 Browse & search courses with smart filters
 - 📂 Filter by category, level, and price
+- 🛒 Shopping cart with multi-course checkout
 - 📚 Enroll in free or paid courses
 - 📊 Track learning progress with progress bars
 - 🎥 Watch video lectures with Cloudinary player
-- ⭐ Leave reviews and ratings
-- 💝 Manage course wishlist
-- 📜 Earn completion certificates
+- ⭐ Leave reviews and ratings with star system
+- 💝 Save courses to favourites
+- 📜 Auto-generated completion certificates
+- 🧾 View purchase history and invoices
 - 📱 Mobile-friendly responsive design
 
 </td>
@@ -165,6 +168,8 @@
 | `zod` | Schema validation |
 | `@tanstack/react-query` | Server state management |
 | `zustand` | Client state management |
+| `@tiptap/react` | Rich text editor for course descriptions |
+| `@dnd-kit` | Drag and drop for section/lecture reordering |
 | `sonner` | Toast notifications |
 | `lucide-react` | Icon library |
 | `date-fns` | Date formatting |
@@ -181,20 +186,32 @@
 | `/` | Homepage with featured courses and categories |
 | `/courses` | Browse all published courses |
 | `/courses/[slug]` | Individual course details page |
+| `/courses/[slug]/enroll` | Course enrollment/checkout page |
 | `/categories` | Browse all categories |
 | `/categories/[slug]` | Courses in a specific category |
+| `/instructors/[id]` | Instructor profile page |
 | `/search` | Search courses |
 | `/about` | About the platform |
-| `/become-instructor` | Instructor information page |
+| `/become-instructor` | Instructor application page |
 | `/login` | User login |
 | `/register` | User registration |
 | `/forgot-password` | Password reset |
+| `/checkout/success` | Payment success page |
 
 ### Student Routes (Protected)
 | Route | Description |
 |-------|-------------|
 | `/my-courses` | Student's enrolled courses |
-| `/my-courses/[courseId]` | Course player with video lectures |
+| `/my-courses/[courseId]` | Course overview with sections |
+| `/my-courses/[courseId]/lectures/[lectureId]` | Video lecture player |
+| `/cart` | Shopping cart |
+| `/favourites` | Saved/favourite courses |
+| `/certificates` | Earned completion certificates |
+| `/account` | Account settings |
+| `/account/purchases` | Purchase history |
+| `/account/invoices` | Invoice history |
+| `/notifications` | User notifications |
+| `/messages` | User messages |
 
 ### Instructor Routes (Protected)
 | Route | Description |
@@ -209,6 +226,7 @@
 | `/admin` | Admin dashboard |
 | `/admin/users` | User management |
 | `/admin/courses` | Course management |
+| `/admin/applications` | Instructor applications review |
 
 ---
 
@@ -218,10 +236,20 @@
 |----------|--------|-------------|
 | `/api/auth/[...nextauth]` | ALL | NextAuth.js authentication |
 | `/api/auth/register` | POST | User registration |
-| `/api/courses` | GET | Get published courses |
-| `/api/courses` | POST | Create course (instructor) |
+| `/api/courses` | GET/POST | Get courses / Create course |
+| `/api/courses/[id]` | GET/PATCH/DELETE | Course CRUD operations |
+| `/api/courses/[id]/sections` | GET/POST | Course sections management |
+| `/api/courses/[id]/reviews` | GET/POST | Course reviews |
 | `/api/categories` | GET | Get all categories |
+| `/api/cart` | GET/POST/DELETE | Shopping cart management |
+| `/api/favourites` | GET/POST/DELETE | Favourites/wishlist |
 | `/api/checkout` | POST | Create Stripe checkout session |
+| `/api/checkout/verify` | POST | Verify checkout completion |
+| `/api/enrollments` | POST | Enroll in free courses |
+| `/api/certificates/generate` | POST | Generate completion certificate |
+| `/api/lectures/[id]/progress` | POST | Update lecture progress |
+| `/api/instructor-applications` | POST | Submit instructor application |
+| `/api/admin/instructor-applications` | GET/PATCH | Review applications (admin) |
 | `/api/webhooks/stripe` | POST | Handle Stripe webhooks |
 
 ---
@@ -235,12 +263,15 @@ erDiagram
     User ||--o{ Review : writes
     User ||--o{ Purchase : makes
     User ||--o{ Wishlist : has
+    User ||--o{ CartItem : has
     User ||--o{ Certificate : earns
+    User ||--o| InstructorApplication : submits
     Course ||--o{ Section : contains
     Section ||--o{ Lecture : contains
     Lecture ||--o{ Resource : has
     Course ||--o{ Enrollment : has
     Course ||--o{ Review : receives
+    Course ||--o{ CartItem : in
     Course }o--|| Category : belongs_to
     Enrollment ||--o{ LectureProgress : tracks
     Purchase ||--|| Course : for
@@ -256,10 +287,13 @@ erDiagram
 | **Section** | Course sections/modules |
 | **Lecture** | Video lectures with duration |
 | **Enrollment** | Student course enrollments |
+| **LectureProgress** | Track lecture completion status |
 | **Review** | Course ratings and reviews |
 | **Purchase** | Payment transactions |
 | **Certificate** | Completion certificates |
-| **Wishlist** | Saved courses |
+| **Wishlist** | Saved/favourite courses |
+| **CartItem** | Shopping cart items |
+| **InstructorApplication** | Instructor signup applications |
 | **Earning** | Instructor earnings |
 
 ---
