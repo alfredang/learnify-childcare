@@ -19,51 +19,66 @@ export const metadata: Metadata = {
 }
 
 async function getInstructorStats(userId: string) {
-  const [courses, totalStudents, totalEarnings, avgRating] = await Promise.all([
-    prisma.course.count({
-      where: { instructorId: userId },
-    }),
-    prisma.enrollment.count({
-      where: {
-        course: { instructorId: userId },
-      },
-    }),
-    prisma.purchase.aggregate({
-      where: {
-        course: { instructorId: userId },
-        status: "COMPLETED",
-      },
-      _sum: { instructorEarning: true },
-    }),
-    prisma.course.aggregate({
-      where: {
-        instructorId: userId,
-        status: "PUBLISHED",
-      },
-      _avg: { averageRating: true },
-    }),
-  ])
+  try {
+    const [courses, totalStudents, totalEarnings, avgRating] = await Promise.all([
+      prisma.course.count({
+        where: { instructorId: userId },
+      }),
+      prisma.enrollment.count({
+        where: {
+          course: { instructorId: userId },
+        },
+      }),
+      prisma.purchase.aggregate({
+        where: {
+          course: { instructorId: userId },
+          status: "COMPLETED",
+        },
+        _sum: { instructorEarning: true },
+      }),
+      prisma.course.aggregate({
+        where: {
+          instructorId: userId,
+          status: "PUBLISHED",
+        },
+        _avg: { averageRating: true },
+      }),
+    ])
 
-  return {
-    totalCourses: courses,
-    totalStudents,
-    totalEarnings: totalEarnings._sum.instructorEarning || 0,
-    averageRating: avgRating._avg.averageRating || 0,
+    return {
+      totalCourses: courses,
+      totalStudents,
+      totalEarnings: totalEarnings._sum.instructorEarning || 0,
+      averageRating: avgRating._avg.averageRating || 0,
+    }
+  } catch (error) {
+    console.error("Failed to fetch instructor stats:", error)
+    return {
+      totalCourses: 0,
+      totalStudents: 0,
+      totalEarnings: 0,
+      averageRating: 0,
+    }
   }
 }
 
 async function getRecentCourses(userId: string) {
-  return prisma.course.findMany({
-    where: { instructorId: userId },
-    include: {
-      category: true,
-      _count: {
-        select: { enrollments: true, reviews: true },
+  try {
+    return await prisma.course.findMany({
+      where: { instructorId: userId },
+      include: {
+        category: true,
+        _count: {
+          select: { enrollments: true, reviews: true },
+        },
       },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 5,
-  })
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    })
+  } catch (error) {
+    console.error("Failed to fetch recent courses:", error)
+    return []
+  }
 }
 
 export default async function InstructorDashboardPage() {

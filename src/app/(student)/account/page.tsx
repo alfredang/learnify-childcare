@@ -15,17 +15,22 @@ export const metadata: Metadata = {
 }
 
 async function getUserProfile(userId: string) {
-  return prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      _count: {
-        select: {
-          enrollments: true,
-          purchases: true,
+  try {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        _count: {
+          select: {
+            enrollments: true,
+            purchases: true,
+          },
         },
       },
-    },
-  })
+    })
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error)
+    return null
+  }
 }
 
 export default async function AccountPage() {

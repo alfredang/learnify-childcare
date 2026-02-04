@@ -28,13 +28,18 @@ const statusColors: Record<string, string> = {
 }
 
 async function getApplications() {
-  return prisma.instructorApplication.findMany({
-    include: {
-      user: { select: { id: true, name: true, email: true, image: true } },
-      reviewedBy: { select: { id: true, name: true } },
-    },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-  })
+  try {
+    return await prisma.instructorApplication.findMany({
+      include: {
+        user: { select: { id: true, name: true, email: true, image: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    })
+  } catch (error) {
+    console.error("Failed to fetch applications:", error)
+    return []
+  }
 }
 
 export default async function AdminApplicationsPage() {

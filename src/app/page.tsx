@@ -102,10 +102,16 @@ export default async function HomePage() {
     getStats(),
     auth(),
   ])
-  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
-    getWishlistedCourseIds(session?.user?.id),
-    getCartItemCourseIds(session?.user?.id),
-  ])
+  let wishlistedCourseIds = new Set<string>()
+  let cartCourseIds = new Set<string>()
+  try {
+    ;[wishlistedCourseIds, cartCourseIds] = await Promise.all([
+      getWishlistedCourseIds(session?.user?.id),
+      getCartItemCourseIds(session?.user?.id),
+    ])
+  } catch {
+    // Gracefully handle database errors (e.g., Neon cold start)
+  }
 
   return (
     <div className="flex flex-col">

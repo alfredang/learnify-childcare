@@ -20,18 +20,23 @@ export const metadata: Metadata = {
 }
 
 async function getCourses() {
-  return prisma.course.findMany({
-    include: {
-      instructor: {
-        select: { name: true, email: true },
+  try {
+    return await prisma.course.findMany({
+      include: {
+        instructor: {
+          select: { name: true, email: true },
+        },
+        category: true,
+        _count: {
+          select: { enrollments: true },
+        },
       },
-      category: true,
-      _count: {
-        select: { enrollments: true },
-      },
-    },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-  })
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    })
+  } catch (error) {
+    console.error("Failed to fetch courses:", error)
+    return []
+  }
 }
 
 const statusColors: Record<string, string> = {

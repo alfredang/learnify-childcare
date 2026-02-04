@@ -14,17 +14,22 @@ export const metadata: Metadata = {
 }
 
 async function getInvoices(userId: string) {
-  return prisma.purchase.findMany({
-    where: { userId, status: "COMPLETED" },
-    include: {
-      course: {
-        select: {
-          title: true,
+  try {
+    return await prisma.purchase.findMany({
+      where: { userId, status: "COMPLETED" },
+      include: {
+        course: {
+          select: {
+            title: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+      orderBy: { createdAt: "desc" },
+    })
+  } catch (error) {
+    console.error("Failed to fetch invoices:", error)
+    return []
+  }
 }
 
 export default async function InvoicesPage() {

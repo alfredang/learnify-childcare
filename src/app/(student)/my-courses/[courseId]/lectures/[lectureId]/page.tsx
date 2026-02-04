@@ -9,78 +9,83 @@ interface LecturePageProps {
 }
 
 async function getLectureData(courseId: string, lectureId: string, userId: string) {
-  // Verify enrollment
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: { userId, courseId },
-    },
-    include: {
-      course: {
-        include: {
-          instructor: {
-            select: { id: true, name: true, image: true },
-          },
-          sections: {
-            orderBy: { position: "asc" },
-            include: {
-              lectures: {
-                orderBy: { position: "asc" },
+  try {
+    // Verify enrollment
+    const enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: { id: true, name: true, image: true },
+            },
+            sections: {
+              orderBy: { position: "asc" },
+              include: {
+                lectures: {
+                  orderBy: { position: "asc" },
+                },
               },
             },
           },
         },
       },
-    },
-  })
+    })
 
-  if (!enrollment) return null
+    if (!enrollment) return null
 
-  // Get current lecture
-  const lecture = enrollment.course.sections
-    .flatMap((s) => s.lectures)
-    .find((l) => l.id === lectureId)
+    // Get current lecture
+    const lecture = enrollment.course.sections
+      .flatMap((s) => s.lectures)
+      .find((l) => l.id === lectureId)
 
-  if (!lecture) return null
+    if (!lecture) return null
 
-  // Get all lecture progress for this course
-  const progressRecords = await prisma.lectureProgress.findMany({
-    where: {
-      userId,
-      lecture: {
-        section: { courseId },
+    // Get all lecture progress for this course
+    const progressRecords = await prisma.lectureProgress.findMany({
+      where: {
+        userId,
+        lecture: {
+          section: { courseId },
+        },
       },
-    },
-    select: {
-      lectureId: true,
-      isCompleted: true,
-      lastPosition: true,
-    },
-  })
+      select: {
+        lectureId: true,
+        isCompleted: true,
+        lastPosition: true,
+      },
+    })
 
-  const lectureProgress = progressRecords.reduce(
-    (acc, p) => {
-      acc[p.lectureId] = { isCompleted: p.isCompleted, lastPosition: p.lastPosition }
-      return acc
-    },
-    {} as Record<string, { isCompleted: boolean; lastPosition: number }>
-  )
+    const lectureProgress = progressRecords.reduce(
+      (acc, p) => {
+        acc[p.lectureId] = { isCompleted: p.isCompleted, lastPosition: p.lastPosition }
+        return acc
+      },
+      {} as Record<string, { isCompleted: boolean; lastPosition: number }>
+    )
 
-  // Build flat lecture list for prev/next navigation
-  const allLectures = enrollment.course.sections.flatMap((s) =>
-    s.lectures.map((l) => ({ id: l.id, title: l.title }))
-  )
-  const currentIndex = allLectures.findIndex((l) => l.id === lectureId)
-  const prevLecture = currentIndex > 0 ? allLectures[currentIndex - 1] : null
-  const nextLecture =
-    currentIndex < allLectures.length - 1 ? allLectures[currentIndex + 1] : null
+    // Build flat lecture list for prev/next navigation
+    const allLectures = enrollment.course.sections.flatMap((s) =>
+      s.lectures.map((l) => ({ id: l.id, title: l.title }))
+    )
+    const currentIndex = allLectures.findIndex((l) => l.id === lectureId)
+    const prevLecture = currentIndex > 0 ? allLectures[currentIndex - 1] : null
+    const nextLecture =
+      currentIndex < allLectures.length - 1 ? allLectures[currentIndex + 1] : null
 
-  return {
-    enrollment,
-    course: enrollment.course,
-    lecture,
-    lectureProgress,
-    prevLecture,
-    nextLecture,
+    return {
+      enrollment,
+      course: enrollment.course,
+      lecture,
+      lectureProgress,
+      prevLecture,
+      nextLecture,
+    }
+  } catch (error) {
+    console.error("Failed to fetch lecture data:", error)
+    return null
   }
 }
 

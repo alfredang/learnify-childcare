@@ -98,10 +98,16 @@ export default async function InstructorPage({
     notFound()
   }
 
-  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
-    getWishlistedCourseIds(session?.user?.id),
-    getCartItemCourseIds(session?.user?.id),
-  ])
+  let wishlistedCourseIds = new Set<string>()
+  let cartCourseIds = new Set<string>()
+  try {
+    ;[wishlistedCourseIds, cartCourseIds] = await Promise.all([
+      getWishlistedCourseIds(session?.user?.id),
+      getCartItemCourseIds(session?.user?.id),
+    ])
+  } catch {
+    // Gracefully handle database errors
+  }
 
   const totalStudents = instructor.courses.reduce(
     (sum: number, c: { totalStudents: number }) => sum + c.totalStudents,

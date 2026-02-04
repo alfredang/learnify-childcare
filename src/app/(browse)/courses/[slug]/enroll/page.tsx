@@ -27,24 +27,29 @@ interface EnrollPageProps {
 }
 
 async function getCourse(slug: string) {
-  return prisma.course.findUnique({
-    where: { slug, status: "PUBLISHED" },
-    include: {
-      instructor: {
-        select: { id: true, name: true, image: true },
-      },
-      sections: {
-        include: {
-          lectures: {
-            select: { id: true, videoDuration: true },
+  try {
+    return await prisma.course.findUnique({
+      where: { slug, status: "PUBLISHED" },
+      include: {
+        instructor: {
+          select: { id: true, name: true, image: true },
+        },
+        sections: {
+          include: {
+            lectures: {
+              select: { id: true, videoDuration: true },
+            },
           },
         },
+        _count: {
+          select: { enrollments: true, reviews: true },
+        },
       },
-      _count: {
-        select: { enrollments: true, reviews: true },
-      },
-    },
-  })
+    })
+  } catch (error) {
+    console.error("Failed to fetch course:", error)
+    return null
+  }
 }
 
 export default async function EnrollPage({ params, searchParams }: EnrollPageProps) {
@@ -78,11 +83,16 @@ export default async function EnrollPage({ params, searchParams }: EnrollPagePro
   const durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
 
   // Check enrollment status
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: { userId: session.user.id, courseId: course.id },
-    },
-  })
+  let enrollment = null
+  try {
+    enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId: session.user.id, courseId: course.id },
+      },
+    })
+  } catch {
+    // Gracefully handle database errors
+  }
 
   // Success state — shown after Stripe redirect or if already enrolled
   if (success === "true" || enrollment) {

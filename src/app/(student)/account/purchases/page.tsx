@@ -15,23 +15,28 @@ export const metadata: Metadata = {
 }
 
 async function getPurchases(userId: string) {
-  return prisma.purchase.findMany({
-    where: { userId },
-    include: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          thumbnail: true,
-          instructor: {
-            select: { name: true },
+  try {
+    return await prisma.purchase.findMany({
+      where: { userId },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            thumbnail: true,
+            instructor: {
+              select: { name: true },
+            },
           },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+      orderBy: { createdAt: "desc" },
+    })
+  } catch (error) {
+    console.error("Failed to fetch purchases:", error)
+    return []
+  }
 }
 
 export default async function PurchasesPage() {

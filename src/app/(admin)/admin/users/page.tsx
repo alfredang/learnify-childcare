@@ -17,23 +17,28 @@ export const metadata: Metadata = {
 }
 
 async function getUsers() {
-  return prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      role: true,
-      createdAt: true,
-      _count: {
-        select: {
-          courses: true,
-          enrollments: true,
+  try {
+    return await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            courses: true,
+            enrollments: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+      orderBy: { createdAt: "desc" },
+    })
+  } catch (error) {
+    console.error("Failed to fetch users:", error)
+    return []
+  }
 }
 
 const roleColors: Record<string, string> = {

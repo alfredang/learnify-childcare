@@ -37,84 +37,95 @@ interface CoursePageProps {
 }
 
 async function getCourse(slug: string) {
-  const course = await prisma.course.findUnique({
-    where: { slug, status: "PUBLISHED" },
-    include: {
-      instructor: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-          headline: true,
-          bio: true,
-          _count: {
-            select: {
-              courses: { where: { status: "PUBLISHED" } },
+  try {
+    const course = await prisma.course.findUnique({
+      where: { slug, status: "PUBLISHED" },
+      include: {
+        instructor: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            headline: true,
+            bio: true,
+            _count: {
+              select: {
+                courses: { where: { status: "PUBLISHED" } },
+              },
             },
           },
         },
-      },
-      category: true,
-      sections: {
-        orderBy: { position: "asc" },
-        include: {
-          lectures: {
-            orderBy: { position: "asc" },
+        category: true,
+        sections: {
+          orderBy: { position: "asc" },
+          include: {
+            lectures: {
+              orderBy: { position: "asc" },
+            },
           },
         },
-      },
-      reviews: {
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { id: true, name: true, image: true },
+        reviews: {
+          take: 5,
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: {
+              select: { id: true, name: true, image: true },
+            },
           },
         },
+        _count: {
+          select: { enrollments: true, reviews: true },
+        },
       },
-      _count: {
-        select: { enrollments: true, reviews: true },
-      },
-    },
-  })
+    })
 
-  return course
+    return course
+  } catch (error) {
+    console.error("Failed to fetch course:", error)
+    return null
+  }
 }
 
 async function checkEnrollment(courseId: string, userId?: string) {
   if (!userId) return false
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: { userId, courseId },
-    },
-  })
-
-  return !!enrollment
+  try {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+    })
+    return !!enrollment
+  } catch {
+    return false
+  }
 }
 
 async function checkWishlist(courseId: string, userId?: string) {
   if (!userId) return false
-
-  const item = await prisma.wishlist.findUnique({
-    where: {
-      userId_courseId: { userId, courseId },
-    },
-  })
-
-  return !!item
+  try {
+    const item = await prisma.wishlist.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+    })
+    return !!item
+  } catch {
+    return false
+  }
 }
 
 async function checkCart(courseId: string, userId?: string) {
   if (!userId) return false
-
-  const item = await prisma.cartItem.findUnique({
-    where: {
-      userId_courseId: { userId, courseId },
-    },
-  })
-
-  return !!item
+  try {
+    const item = await prisma.cartItem.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+    })
+    return !!item
+  } catch {
+    return false
+  }
 }
 
 export async function generateMetadata({

@@ -20,56 +20,66 @@ interface CoursePageProps {
 }
 
 async function getEnrollment(courseId: string, userId: string) {
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: { userId, courseId },
-    },
-    include: {
-      course: {
-        include: {
-          instructor: {
-            select: { name: true },
-          },
-          sections: {
-            orderBy: { position: "asc" },
-            include: {
-              lectures: {
-                orderBy: { position: "asc" },
+  try {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: { name: true },
+            },
+            sections: {
+              orderBy: { position: "asc" },
+              include: {
+                lectures: {
+                  orderBy: { position: "asc" },
+                },
               },
             },
           },
         },
       },
-    },
-  })
+    })
 
-  return enrollment
+    return enrollment
+  } catch (error) {
+    console.error("Failed to fetch enrollment:", error)
+    return null
+  }
 }
 
 async function getLectureProgress(userId: string, courseId: string) {
-  const progress = await prisma.lectureProgress.findMany({
-    where: {
-      userId,
-      lecture: {
-        section: {
-          courseId,
+  try {
+    const progress = await prisma.lectureProgress.findMany({
+      where: {
+        userId,
+        lecture: {
+          section: {
+            courseId,
+          },
         },
       },
-    },
-    select: {
-      lectureId: true,
-      isCompleted: true,
-      lastPosition: true,
-    },
-  })
+      select: {
+        lectureId: true,
+        isCompleted: true,
+        lastPosition: true,
+      },
+    })
 
-  return progress.reduce(
-    (acc, p) => {
-      acc[p.lectureId] = { isCompleted: p.isCompleted, lastPosition: p.lastPosition }
-      return acc
-    },
-    {} as Record<string, { isCompleted: boolean; lastPosition: number }>
-  )
+    return progress.reduce(
+      (acc, p) => {
+        acc[p.lectureId] = { isCompleted: p.isCompleted, lastPosition: p.lastPosition }
+        return acc
+      },
+      {} as Record<string, { isCompleted: boolean; lastPosition: number }>
+    )
+  } catch (error) {
+    console.error("Failed to fetch lecture progress:", error)
+    return {}
+  }
 }
 
 export async function generateMetadata({

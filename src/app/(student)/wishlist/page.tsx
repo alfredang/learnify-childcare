@@ -11,31 +11,40 @@ export const metadata: Metadata = {
 }
 
 async function getWishlist(userId: string) {
-  const items = await prisma.wishlist.findMany({
-    where: { userId },
-    include: {
-      course: {
-        include: {
-          instructor: {
-            select: { id: true, name: true, image: true, headline: true },
+  try {
+    const items = await prisma.wishlist.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: { id: true, name: true, image: true, headline: true },
+            },
+            category: true,
           },
-          category: true,
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+      orderBy: { createdAt: "desc" },
+    })
 
-  return JSON.parse(JSON.stringify(items))
+    return JSON.parse(JSON.stringify(items))
+  } catch (error) {
+    console.error("Failed to fetch wishlist:", error)
+    return []
+  }
 }
 
 async function getEnrolledCourseIds(userId: string) {
-  const enrollments = await prisma.enrollment.findMany({
-    where: { userId },
-    select: { courseId: true },
-  })
+  try {
+    const enrollments = await prisma.enrollment.findMany({
+      where: { userId },
+      select: { courseId: true },
+    })
 
-  return enrollments.map((e) => e.courseId)
+    return enrollments.map((e) => e.courseId)
+  } catch {
+    return []
+  }
 }
 
 export default async function WishlistPage() {

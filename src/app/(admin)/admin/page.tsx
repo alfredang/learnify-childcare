@@ -9,48 +9,62 @@ export const metadata: Metadata = {
 }
 
 async function getStats() {
-  const [
-    totalUsers,
-    totalInstructors,
-    totalStudents,
-    totalCourses,
-    publishedCourses,
-    pendingCourses,
-    totalRevenue,
-    recentUsers,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "INSTRUCTOR" } }),
-    prisma.user.count({ where: { role: "STUDENT" } }),
-    prisma.course.count(),
-    prisma.course.count({ where: { status: "PUBLISHED" } }),
-    prisma.course.count({ where: { status: "PENDING_REVIEW" } }),
-    prisma.purchase.aggregate({
-      where: { status: "COMPLETED" },
-      _sum: { amount: true },
-    }),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    }),
-  ])
+  try {
+    const [
+      totalUsers,
+      totalInstructors,
+      totalStudents,
+      totalCourses,
+      publishedCourses,
+      pendingCourses,
+      totalRevenue,
+      recentUsers,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: "INSTRUCTOR" } }),
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.course.count(),
+      prisma.course.count({ where: { status: "PUBLISHED" } }),
+      prisma.course.count({ where: { status: "PENDING_REVIEW" } }),
+      prisma.purchase.aggregate({
+        where: { status: "COMPLETED" },
+        _sum: { amount: true },
+      }),
+      prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      }),
+    ])
 
-  return {
-    totalUsers,
-    totalInstructors,
-    totalStudents,
-    totalCourses,
-    publishedCourses,
-    pendingCourses,
-    totalRevenue: totalRevenue._sum.amount || 0,
-    recentUsers,
+    return {
+      totalUsers,
+      totalInstructors,
+      totalStudents,
+      totalCourses,
+      publishedCourses,
+      pendingCourses,
+      totalRevenue: totalRevenue._sum.amount || 0,
+      recentUsers,
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin stats:", error)
+    return {
+      totalUsers: 0,
+      totalInstructors: 0,
+      totalStudents: 0,
+      totalCourses: 0,
+      publishedCourses: 0,
+      pendingCourses: 0,
+      totalRevenue: 0,
+      recentUsers: [] as { id: string; name: string | null; email: string; role: string; createdAt: Date }[],
+    }
   }
 }
 

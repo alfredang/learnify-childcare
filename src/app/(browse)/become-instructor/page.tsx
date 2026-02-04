@@ -141,20 +141,25 @@ export default async function BecomeInstructorPage() {
   let appState: ApplicationState = { type: "logged-out" }
 
   if (session?.user) {
-    const application = await prisma.instructorApplication.findFirst({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-    })
+    try {
+      const application = await prisma.instructorApplication.findFirst({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+      })
 
-    if (!application || application.status === "REJECTED") {
-      appState =
-        application?.status === "REJECTED"
-          ? { type: "rejected", adminNote: application.adminNote }
-          : { type: "can-apply" }
-    } else if (application.status === "PENDING") {
-      appState = { type: "pending" }
-    } else if (application.status === "APPROVED") {
-      redirect("/instructor")
+      if (!application || application.status === "REJECTED") {
+        appState =
+          application?.status === "REJECTED"
+            ? { type: "rejected", adminNote: application.adminNote }
+            : { type: "can-apply" }
+      } else if (application.status === "PENDING") {
+        appState = { type: "pending" }
+      } else if (application.status === "APPROVED") {
+        redirect("/instructor")
+      }
+    } catch (error) {
+      console.error("Failed to fetch application status:", error)
+      appState = { type: "can-apply" }
     }
   }
 
