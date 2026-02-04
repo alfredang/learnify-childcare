@@ -210,7 +210,7 @@ export default async function BecomeInstructorPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 md:py-24">
+      <section id="why-teach" className="py-16 md:py-24">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Why Teach on Learnify?</h2>

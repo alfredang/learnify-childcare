@@ -25,6 +25,10 @@ export function BecomeInstructorCTA({
 }: BecomeInstructorCTAProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
+  const scrollToWhyTeach = () => {
+    document.getElementById("why-teach")?.scrollIntoView({ behavior: "smooth" })
+  }
+
   if (appState.type === "logged-out") {
     if (variant === "bottom") {
       return (
@@ -58,8 +62,8 @@ export function BecomeInstructorCTA({
               <UserPlus className="ml-2 h-5 w-5" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="#how-it-works">Learn More</Link>
+          <Button size="lg" variant="outline" onClick={scrollToWhyTeach}>
+            Learn More
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -148,8 +152,8 @@ export function BecomeInstructorCTA({
             Reapply
             <RefreshCw className="ml-2 h-5 w-5" />
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="#how-it-works">Learn More</Link>
+          <Button size="lg" variant="outline" onClick={scrollToWhyTeach}>
+            Learn More
           </Button>
         </div>
         <InstructorApplicationForm
@@ -190,8 +194,8 @@ export function BecomeInstructorCTA({
           <ArrowRight className="h-6 w-6" />
         </button>
         <div>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="#how-it-works">Learn More</Link>
+          <Button size="lg" variant="outline" onClick={scrollToWhyTeach}>
+            Learn More
           </Button>
         </div>
       </div>
