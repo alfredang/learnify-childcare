@@ -59,7 +59,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { VideoUpload } from "@/components/courses/video-upload"
 import { QuizBuilder } from "@/components/courses/quiz-builder"
 import { quizDataSchema } from "@/lib/validations/course"
-import { cn } from "@/lib/utils"
+import { cn, formatDuration } from "@/lib/utils"
 
 interface Section {
   id: string
@@ -91,13 +91,6 @@ const lectureTypeIcons = {
   VIDEO: Film,
   TEXT: FileText,
   QUIZ: HelpCircle,
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return ""
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}:${String(s).padStart(2, "0")}`
 }
 
 function SortableSectionItem({

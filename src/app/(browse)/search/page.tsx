@@ -1,6 +1,7 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { Suspense } from "react"
 import { CourseGrid } from "@/components/courses/course-grid"
@@ -153,7 +154,7 @@ function SearchContent() {
               Try adjusting your search terms or browse our categories.
             </p>
             <Button variant="outline" asChild>
-              <a href="/categories">Browse Categories</a>
+              <Link href="/categories">Browse Categories</Link>
             </Button>
           </div>
         ) : (

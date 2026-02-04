@@ -114,8 +114,6 @@ async function handleSinglePurchase(
       where: { userId, courseId },
     }),
   ])
-
-  console.log(`Enrollment created for user ${userId} in course ${courseId}`)
 }
 
 async function handleCartPurchase(
@@ -189,8 +187,4 @@ async function handleCartPurchase(
   )
 
   await prisma.$transaction(operations)
-
-  console.log(
-    `Cart checkout completed for user ${userId}: ${courses.length} courses enrolled`
-  )
 }

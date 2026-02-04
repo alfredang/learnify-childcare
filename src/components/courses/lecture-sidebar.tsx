@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn, formatDuration } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
 import {
   Play,
@@ -24,12 +24,6 @@ interface LectureSidebarProps {
     lectures: Lecture[]
   })[]
   lectureProgress: Record<string, { isCompleted: boolean; lastPosition: number }>
-}
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}:${s.toString().padStart(2, "0")}`
 }
 
 const lectureIcon = {

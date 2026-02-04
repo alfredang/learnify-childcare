@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useTransition } from "react"
+import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { ReviewWithUser } from "@/types"
 import { Separator } from "@/components/ui/separator"

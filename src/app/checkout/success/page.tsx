@@ -28,14 +28,11 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get("session_id")
-  const [state, setState] = useState<VerifyState>("loading")
+  const [state, setState] = useState<VerifyState>(() => sessionId ? "loading" : "error")
   const [courseId, setCourseId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!sessionId) {
-      setState("error")
-      return
-    }
+    if (!sessionId) return
 
     async function verifyPayment() {
       try {
