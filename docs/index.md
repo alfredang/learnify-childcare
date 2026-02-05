@@ -84,6 +84,7 @@
 | **Stripe** | Payment processing |
 | **Cloudinary** | Media storage |
 | **shadcn/ui** | UI components |
+| **Recharts** | Charts for analytics |
 
 ## Application Routes
 
@@ -98,7 +99,7 @@
 | `/categories/[slug]` | Category courses |
 | `/search` | Search courses |
 | `/about` | About page |
-| `/become-instructor` | Instructor info |
+| `/become-instructor` | Instructor signup (new users) or auto-promote (existing students) |
 | `/login` | Login page |
 | `/register` | Registration |
 
@@ -117,10 +118,12 @@
 | `/certificates` | Student | Completion certificates |
 | `/messages` | Student | Messages |
 | `/notifications` | Student | Notifications |
-| `/instructor` | Instructor | Dashboard |
-| `/instructor/courses` | Instructor | Manage courses |
-| `/instructor/courses/new` | Instructor | Create course |
-| `/instructor/courses/[id]` | Instructor | Edit course |
+| `/instructor` | Instructor | Course list (dashboard) |
+| `/instructor/courses/new` | Instructor | Create course (3-step wizard) |
+| `/instructor/courses/[id]` | Instructor | Course editor (sidebar checklist) |
+| `/instructor/performance` | Instructor | Revenue & analytics |
+| `/instructor/tools` | Instructor | Instructor tools |
+| `/instructor/profile` | Instructor | Profile management |
 | `/admin` | Admin | Admin dashboard |
 | `/admin/users` | Admin | User management |
 | `/admin/courses` | Admin | Course management |
@@ -160,6 +163,9 @@
 | `/api/instructor-applications` | GET/POST | Application status/submit |
 | `/api/admin/instructor-applications` | GET | List applications (admin) |
 | `/api/admin/instructor-applications/[id]` | PATCH | Approve/reject (admin) |
+| `/api/become-instructor` | POST | Promote student to instructor |
+| `/api/profile` | GET/PUT | Get or update user profile |
+| `/api/profile/image` | POST | Upload profile image |
 
 ## Quick Start
 

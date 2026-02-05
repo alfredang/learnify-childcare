@@ -35,6 +35,7 @@ Learnify is a Udemy-clone online learning marketplace where instructors create a
 | Sonner | 2.0.7 | Toast notifications |
 | date-fns | 4.1.0 | Date formatting |
 | slugify | 1.6.6 | URL slug generation |
+| Recharts | 3.7.0 | Charts for instructor performance dashboard |
 
 ---
 
@@ -112,15 +113,15 @@ learnify/
 │   │   ├── (auth)/                # Auth pages: login, register, forgot-password
 │   │   ├── (browse)/              # Public pages: courses, categories, instructors, search, about
 │   │   ├── (student)/             # Student pages: my-courses, lecture viewer, cart, favourites, account, certificates
-│   │   ├── (instructor)/          # Instructor pages: dashboard, course management
+│   │   ├── (instructor)/          # Instructor pages: dashboard, course editor, creation wizard, performance, tools, profile
 │   │   ├── (admin)/               # Admin pages: dashboard, users, courses, applications
 │   │   └── api/                   # API routes (REST endpoints)
 │   ├── components/
 │   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons, InstructorApplicationForm
 │   │   ├── admin/                 # ApplicationActions (approve/reject instructor applications)
-│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseFiltersWrapper, CourseContentEditor, VideoPlayer, VideoUpload, ImageUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, FavouriteButton, AddToCartButton, BuyNowButton, RatingSummary, ReviewForm, ReviewList, CourseReviewsSection
-│   │   ├── layout/                # Header, Footer, MobileNav, UserMenu, CartDropdown
-│   │   ├── shared/                # EmptyState, LoadingSpinner, PageLoader, StarRating, RichTextEditor, ArrayFieldEditor
+│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseContentEditor, VideoPlayer, VideoUpload, ImageUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, FavouriteButton, AddToCartButton, BuyNowButton, RatingSummary, ReviewForm, ReviewList, CourseReviewsSection, EditorSidebar, InstructorCourseList, RevenueChart, editor-sections/ (IntendedLearnersSection, LandingPageSection, PricingSection)
+│   │   ├── layout/                # Header, Footer, MobileNav, UserMenu, CartDropdown, InstructorSidebar, InstructorProfileForm, InstructorProfileTabs
+│   │   ├── shared/                # EmptyState, LoadingSpinner, PageLoader, StarRating, RichTextEditor, ArrayFieldEditor, EditableListField
 │   │   └── ui/                    # 23 shadcn/ui components (Radix-based)
 │   ├── hooks/                     # use-auth.ts, use-debounce.ts
 │   ├── lib/
@@ -213,12 +214,15 @@ External Services:
 | `/api/instructor-applications` | POST | Student | Submit instructor application (headline + bio) |
 | `/api/admin/instructor-applications` | GET | Admin | List all instructor applications |
 | `/api/admin/instructor-applications/[id]` | PATCH | Admin | Approve or reject application (updates user role on approval) |
+| `/api/become-instructor` | POST | Student | Promote logged-in student to instructor role |
+| `/api/profile` | GET/PUT | Yes | Get or update user profile |
+| `/api/profile/image` | POST | Yes | Upload profile image to Cloudinary |
 
 ### Database Models
 
 Key models in `prisma/schema.prisma`:
 
-- **User** - roles: STUDENT, INSTRUCTOR, ADMIN. Has Stripe fields.
+- **User** - roles: STUDENT, INSTRUCTOR, ADMIN. Has Stripe fields, `onboardingData Json?` for instructor onboarding.
 - **Course** - status: DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, ARCHIVED. Has pricing, stats, featured flags.
 - **Category** - slug-based, with icon field.
 - **Section** / **Lecture** - Course content hierarchy. Lectures have type: VIDEO, TEXT, QUIZ.
@@ -313,11 +317,16 @@ Key models in `prisma/schema.prisma`:
 13. **TipTap rich text editor** is used for course descriptions via `src/components/shared/rich-text-editor.tsx`. It uses `@tiptap/starter-kit` with placeholder extension. Output is HTML stored in the course `description` field.
 14. **dnd-kit** is used for drag-and-drop reordering of sections and lectures in `CourseContentEditor`. Uses `@dnd-kit/core` + `@dnd-kit/sortable`. Reorder is persisted via dedicated `/reorder` API endpoints.
 15. **Favourites** (renamed from Wishlist) uses `/api/favourites` and `src/lib/favourites.ts`. The `FavouriteButton` component handles optimistic UI toggling. The DB model is still named `Wishlist` but all UI and new code uses "favourites" terminology. Legacy `/api/wishlist` endpoint and `src/lib/wishlist.ts` still exist but are superseded.
-16. **Become Instructor** flow uses admin approval. Students submit an application (headline + bio) via `/api/instructor-applications`. Admins approve/reject at `/admin/applications`. On approval, a `prisma.$transaction` updates both the application status and the user's role to INSTRUCTOR. The JWT callback in `auth.ts` re-reads the role from DB when `trigger === "update"` is called via `useSession().update()` on the client. The become-instructor page (`src/app/(browse)/become-instructor/page.tsx`) is a server component that handles 5 states: logged-out, can-apply, pending, rejected, and already-instructor (redirect).
+16. **Become Instructor** has two paths (matching Udemy): (1) New users can register directly as instructor via a signup form on `/become-instructor` — the register API accepts an optional `role: "INSTRUCTOR"`. (2) Existing students click "Create Your Course" CTA on `/become-instructor` which calls `POST /api/become-instructor` to auto-promote STUDENT → INSTRUCTOR, then refreshes the session via `useSession().update()`. The old admin approval flow (`InstructorApplication` model, `/api/instructor-applications`) is still in the codebase for backward compatibility but is no longer the primary path.
 17. **Shopping cart** uses `/api/cart` with `CartItem` model. `AddToCartButton` and `BuyNowButton` in course components. `CartDropdown` in the header provides a cart preview. Supports multi-course checkout via Stripe. Cart items are cleared after successful purchase. Cart page at `/cart` with `cart-grid.tsx`.
 18. **Reviews** API at `/api/courses/[id]/reviews`. `CourseReviewsSection` combines `RatingSummary`, `ReviewForm`, and `ReviewList`. One review per user per course (enforced by `@@unique([userId, courseId])`). Reviews support instructor responses.
 19. **Certificates auto-generate** on course completion when enrollment progress reaches 100%.
 20. **ImageUpload** component (`src/components/courses/image-upload.tsx`) handles course thumbnail uploads to Cloudinary, separate from `VideoUpload` which handles lecture videos.
+21. **Instructor Dashboard** uses a collapsible sidebar (`InstructorSidebar`) that expands on hover. Pages: Courses (list with search/sort via `InstructorCourseList`), Performance (Recharts `LineChart` with date range filter via `RevenueChart`), Tools (placeholder), Profile. Layout at `src/app/(instructor)/layout.tsx`.
+22. **Course Editor** at `/instructor/courses/[id]` uses a left sidebar checklist (`EditorSidebar`) with sections: Plan (Intended Learners), Create (Curriculum), Publish (Landing Page, Pricing). Completion checkmarks are computed from course data. Editor section components live in `src/components/courses/editor-sections/`. Each section calls `onSaved` to invalidate the React Query cache after saving.
+23. **Course Creation Wizard** at `/instructor/courses/new` is a 3-step overlay (title → category → time commitment). Uses `courseCreateSchema` (title + categoryId only) from `src/lib/validations/course.ts`. Creates a DRAFT course and redirects to the editor.
+24. **Publish Flow** is currently simplified for testing: DRAFT → PUBLISHED directly via sidebar "Publish" button (with confirmation dialog warning about enrollment preventing deletion). No review step. Unpublish sets status back to DRAFT. Courses with enrollments cannot be deleted.
+25. **LANGUAGES array** in `src/lib/constants.ts` must match the Prisma schema default (`@default("English")`). The Radix Select component requires `value={field.value || undefined}` (not `""`) to show the placeholder text.
 
 ---
 

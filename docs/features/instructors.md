@@ -2,82 +2,106 @@
 
 Learnify empowers instructors to create and monetize their courses.
 
+## Becoming an Instructor
+
+There are two paths to become an instructor (matching Udemy):
+
+1. **New users** — Register directly as an instructor via the signup form on `/become-instructor`
+2. **Existing students** — Click the "Create Your Course" CTA on `/become-instructor`, which calls `POST /api/become-instructor` to auto-promote STUDENT → INSTRUCTOR and refreshes the session
+
+The legacy admin-approval flow (InstructorApplication model) is still in the codebase for backward compatibility but is no longer the primary path.
+
 ## Course Creation
 
-### Creating a New Course
+### 3-Step Creation Wizard
 
-Instructors can create rich, multimedia courses:
+New courses are created via a 3-step overlay wizard at `/instructor/courses/new`:
 
-1. **Basic Information**
-   - Course title and description
-   - Category selection
-   - Difficulty level
-   - Thumbnail image
+1. **Title** — Enter your course title
+2. **Category** — Select from available categories
+3. **Time commitment** — Estimate weekly hours
 
-2. **Course Structure**
-   - Organize content into sections
-   - Add lectures to each section
-   - Reorder with drag-and-drop
+The wizard uses `courseCreateSchema` (title + categoryId only) to create a minimal DRAFT course, then redirects to the full course editor.
 
-3. **Content Types**
-   - Video lectures (via Cloudinary)
-   - Text content with rich formatting (TipTap editor)
-   - Quizzes (multiple choice, multiple select, open-ended)
-   - Downloadable resources
+### Course Editor
+
+The editor at `/instructor/courses/[id]` uses a left sidebar checklist (`EditorSidebar`) with three sections:
+
+**Plan your course**
+
+- **Intended learners** — Define learning outcomes, requirements, and target audience using Udemy-style editable rows (`EditableListField`)
+
+**Create your content**
+
+- **Curriculum** — Build sections and lectures with drag-and-drop reordering (dnd-kit). Supports VIDEO, TEXT, and QUIZ lecture types.
+
+**Publish your course**
+
+- **Course landing page** — Title, subtitle (120 char limit), description (TipTap rich text), category, level, language, thumbnail image, and promotional video
+- **Pricing** — Set course price in USD (free or paid)
+
+Each section auto-saves and calls `onSaved` to invalidate the React Query cache. Completion checkmarks are computed from course data (green CheckCircle2 icons).
+
+### Content Types
+
+- **Video lectures** — Uploaded via Cloudinary with automatic transcoding and adaptive streaming
+- **Text content** — Rich formatting with TipTap editor (bold, italic, headings, lists)
+- **Quizzes** — Multiple choice, multiple select, and open-ended questions
+- **Downloadable resources** — Attached to lectures
 
 ### Pricing Options
 
-- **Free Courses** - Build your audience
-- **Paid Courses** - Monetize your expertise
+- **Free Courses** — Build your audience
+- **Paid Courses** — Monetize your expertise
 - Flexible pricing in USD
 
-## Content Management
+## Publishing
 
-### Video Upload
+### Simplified Publish Flow
 
-Videos are uploaded directly to Cloudinary:
+The current publish flow is streamlined for fast iteration:
 
-```
-┌──────────┐     ┌───────────┐     ┌─────────────┐
-│ Instructor│ --> │  Learnify │ --> │  Cloudinary │
-│  Upload  │     │   Server  │     │   Storage   │
-└──────────┘     └───────────┘     └─────────────┘
-```
+1. Fill out required sections (intended learners, curriculum, landing page)
+2. Click **Publish** in the editor sidebar
+3. Confirm in the dialog (warns that enrolled courses cannot be deleted)
+4. Course status changes directly from DRAFT → PUBLISHED
 
-Features:
-
-- Multiple video formats supported
-- Automatic transcoding
-- Adaptive streaming
-- Global CDN delivery
+There is no review step. To take a course offline, click **Unpublish** (sets status back to DRAFT).
 
 ### Course Status
 
 | Status | Description |
 |--------|-------------|
-| Draft | Course is being created |
-| Pending | Submitted for review |
-| Published | Live and available |
-| Rejected | Needs modifications |
+| Draft | Course is being created or unpublished |
+| Published | Live and available for enrollment |
 
-## Analytics Dashboard
+> **Note:** Courses with at least 1 enrolled student cannot be deleted. You can only unpublish them.
 
-### Course Performance
+## Instructor Dashboard
 
-Track your courses with detailed analytics:
+The instructor area uses a collapsible sidebar (`InstructorSidebar`) that expands on hover. Available pages:
 
-- **Enrollments** - Total and recent
-- **Revenue** - Earnings per course
-- **Completion Rate** - How many students finish
-- **Ratings** - Average rating and reviews
+### Courses (`/instructor`)
 
-### Student Engagement
+- Udemy-style list view with course rows
+- Client-side search and sort
+- Quick access to edit, preview, or create courses
 
-Monitor how students interact:
+### Performance (`/instructor/performance`)
 
-- Lecture completion rates
-- Drop-off points
-- Time spent per lecture
+- Stats row showing key metrics (enrollments, revenue, ratings)
+- Recharts `LineChart` showing revenue trends over time
+- Date range filter for custom time periods
+
+### Tools (`/instructor/tools`)
+
+- Placeholder cards for future instructor tools
+
+### Profile (`/instructor/profile`)
+
+- Edit instructor profile (name, headline, bio)
+- Social links (website, Twitter, LinkedIn)
+- Profile image upload via Cloudinary
 
 ## Earnings
 

@@ -14,6 +14,7 @@ Learnify is a comprehensive online learning platform with features for students,
 - **Cloudinary** for media management
 - **TipTap** for rich text editing
 - **dnd-kit** for drag-and-drop reordering
+- **Recharts** for instructor performance analytics
 
 ### Role-Based Access
 
@@ -49,12 +50,13 @@ graph TD
 
 === "Instructors"
 
-    - :material-plus-circle: Create multimedia courses
+    - :material-plus-circle: Create courses via 3-step wizard
     - :material-upload: Upload videos to Cloudinary
     - :material-currency-usd: Set course pricing
-    - :material-chart-bar: View analytics dashboard
-    - :material-cash: Track earnings
+    - :material-chart-bar: Performance dashboard with Recharts
+    - :material-cash: Track earnings (70/30 split)
     - :material-account-group: Monitor student engagement
+    - :material-pencil: Sidebar checklist editor for course content
 
 === "Administrators"
 

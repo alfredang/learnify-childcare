@@ -93,15 +93,12 @@ POST /api/courses
 
 **Requires:** Instructor or Admin role
 
-**Request Body:**
+**Request Body (minimal — used by the 3-step creation wizard):**
 
 ```json
 {
   "title": "My Course",
-  "description": "Course description",
-  "categoryId": "...",
-  "level": "BEGINNER",
-  "price": 29.99
+  "categoryId": "..."
 }
 ```
 
@@ -411,7 +408,71 @@ POST /api/enrollments   # Create enrollment (free courses)
 }
 ```
 
-## Instructor Applications API
+## Become Instructor API
+
+### Promote Student to Instructor
+
+```http
+POST /api/become-instructor
+```
+
+**Requires:** Authenticated student
+
+Promotes the logged-in student to the INSTRUCTOR role and updates the JWT cookie so the middleware sees the new role immediately.
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+**Error Codes:**
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `UNAUTHORIZED` | 401 | Not logged in |
+| `ROLE_FORBIDDEN` | 403 | User is not a student |
+| `PROMOTION_FAILED` | 500 | Database error |
+
+## Profile API
+
+### Get / Update Profile
+
+```http
+GET /api/profile
+PUT /api/profile
+```
+
+**Requires:** Authenticated user
+
+**Request Body (PUT):**
+
+```json
+{
+  "name": "John Doe",
+  "headline": "Full-Stack Developer",
+  "bio": "10 years of experience...",
+  "website": "https://example.com",
+  "twitter": "@johndoe",
+  "linkedin": "johndoe"
+}
+```
+
+### Upload Profile Image
+
+```http
+POST /api/profile/image
+```
+
+**Requires:** Authenticated user
+
+Uploads a profile image to Cloudinary and updates the user record.
+
+## Instructor Applications API (Legacy)
+
+> **Note:** The primary path to becoming an instructor is now via `POST /api/become-instructor` (auto-promote) or direct signup with `role: "INSTRUCTOR"` at registration. The application workflow below is retained for backward compatibility.
 
 ### Student Endpoints
 

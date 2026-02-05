@@ -37,9 +37,11 @@ After seeding, you can log in with:
 
 1. Log in with `john@learnify.com`
 2. Go to Instructor Dashboard at `/instructor`
-3. Create a new course
-4. Add sections and lectures
-5. Publish your course
+3. Create a new course via the 3-step wizard at `/instructor/courses/new`
+4. Use the sidebar checklist editor to fill in details (intended learners, curriculum, landing page, pricing)
+5. Click **Publish** in the editor sidebar
+6. View performance analytics at `/instructor/performance`
+7. Manage your profile at `/instructor/profile`
 
 ### As an Admin
 

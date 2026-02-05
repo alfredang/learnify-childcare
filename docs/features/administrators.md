@@ -45,12 +45,7 @@ Roles:
 
 ### Course Approval
 
-New courses require admin approval:
-
-1. Instructor submits course for review
-2. Admin reviews course content
-3. Admin approves or rejects with feedback
-4. If approved, course goes live
+> **Note:** The publish flow is currently simplified — instructors publish directly from DRAFT → PUBLISHED without a review step. The admin role focuses on moderation and featuring rather than pre-publish approval.
 
 ### Course Moderation
 
@@ -91,9 +86,14 @@ Comprehensive platform metrics:
 - Completion rates
 - User retention
 
-## Instructor Applications
+## Instructor Applications (Legacy)
 
-Manage the instructor application workflow:
+The primary path to becoming an instructor is now self-service:
+
+1. **New users** register directly as instructors via the signup form on `/become-instructor`
+2. **Existing students** click "Create Your Course" CTA which auto-promotes them via `POST /api/become-instructor`
+
+The legacy admin-approval workflow is retained for backward compatibility:
 
 - Students submit applications with headline and bio at `/become-instructor`
 - Applications appear in admin dashboard at `/admin/applications`

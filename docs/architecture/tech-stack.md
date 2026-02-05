@@ -69,6 +69,14 @@ Drag-and-drop for content reordering:
 - Used in `CourseContentEditor` for section/lecture reordering
 - Persisted via dedicated `/reorder` API endpoints
 
+### Recharts
+
+Data visualization for instructor analytics:
+
+- `LineChart` for revenue trends over time
+- Date range filtering for performance data
+- Used in `RevenueChart` component on the instructor Performance page
+
 ### Form & Validation
 
 - **React Hook Form** (7.71.1) - Form state management with `zodResolver`
@@ -119,6 +127,10 @@ GET    /api/instructor-applications          # Application status
 POST   /api/instructor-applications          # Submit application
 GET    /api/admin/instructor-applications    # List applications (admin)
 PATCH  /api/admin/instructor-applications/:id # Approve/reject (admin)
+POST   /api/become-instructor                # Promote student to instructor
+GET    /api/profile                          # Get user profile
+PUT    /api/profile                          # Update user profile
+POST   /api/profile/image                    # Upload profile image
 ```
 
 ### Server Actions
