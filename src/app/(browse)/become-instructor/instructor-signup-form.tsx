@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { signIn } from "next-auth/react"
 import { z } from "zod"
+import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,10 +18,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { SocialButtons } from "./social-buttons"
-import Link from "next/link"
+import { SocialButtons } from "@/components/auth/social-buttons"
 
-const signupSchema = z.object({
+const instructorSignupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z
@@ -33,16 +32,14 @@ const signupSchema = z.object({
     ),
 })
 
-type SignupInput = z.infer<typeof signupSchema>
+type InstructorSignupInput = z.infer<typeof instructorSignupSchema>
 
-export function RegisterForm() {
+export function InstructorSignupForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<SignupInput>({
-    resolver: zodResolver(signupSchema),
+  const form = useForm<InstructorSignupInput>({
+    resolver: zodResolver(instructorSignupSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -50,10 +47,11 @@ export function RegisterForm() {
     },
   })
 
-  async function onSubmit(data: SignupInput) {
+  async function onSubmit(data: InstructorSignupInput) {
     setIsLoading(true)
 
     try {
+      // Register as student first — wizard will promote to instructor
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,18 +76,14 @@ export function RegisterForm() {
       })
 
       if (signInResult?.error) {
+        // Registration succeeded but auto-login failed — send to login
         toast.success("Account created! Please sign in.")
-        router.push(
-          callbackUrl !== "/"
-            ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-            : "/login"
-        )
+        router.push("/login?callbackUrl=/become-instructor/onboarding")
         return
       }
 
-      toast.success("Welcome to Learnify!")
-      router.push(callbackUrl)
-      router.refresh()
+      toast.success("Account created! Let's set up your instructor profile.")
+      router.push("/become-instructor/onboarding")
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Something went wrong"
@@ -179,26 +173,12 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <SocialButtons isLoading={isLoading} callbackUrl={callbackUrl} />
+      <SocialButtons isLoading={isLoading} callbackUrl="/become-instructor/onboarding" />
 
       <p className="text-xs text-center text-muted-foreground">
         By signing up, you agree to our{" "}
         <span className="underline">Terms of Use</span> and{" "}
         <span className="underline">Privacy Policy</span>.
-      </p>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link
-          href={
-            callbackUrl !== "/"
-              ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-              : "/login"
-          }
-          className="text-primary font-medium hover:underline"
-        >
-          Log in
-        </Link>
       </p>
     </div>
   )

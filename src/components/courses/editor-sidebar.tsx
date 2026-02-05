@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, Circle, ChevronDown } from "lucide-react"
+import { CheckCircle2, Circle, ChevronDown, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -43,8 +43,10 @@ interface EditorSidebarProps {
   onSectionChange: (section: string) => void
   completionStatus: Record<string, boolean>
   onSubmitForReview: () => void
+  onUnpublish: () => void
   canSubmit: boolean
   courseStatus: string
+  hasEnrollments: boolean
 }
 
 export function EditorSidebar({
@@ -52,8 +54,10 @@ export function EditorSidebar({
   onSectionChange,
   completionStatus,
   onSubmitForReview,
+  onUnpublish,
   canSubmit,
   courseStatus,
+  hasEnrollments,
 }: EditorSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "Plan your course": true,
@@ -134,19 +138,31 @@ export function EditorSidebar({
         ))}
       </nav>
 
-      {/* Submit for Review */}
-      <div className="p-4 border-t">
-        <Button
-          onClick={onSubmitForReview}
-          disabled={!canSubmit}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-        >
-          {courseStatus === "PENDING_REVIEW"
-            ? "Submitted for Review"
-            : courseStatus === "PUBLISHED"
-              ? "Published"
-              : "Submit for Review"}
-        </Button>
+      {/* Publish / Unpublish */}
+      <div className="p-4 border-t space-y-3">
+        {courseStatus === "PUBLISHED" && hasEnrollments && (
+          <div className="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-2.5 text-xs text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>Students are enrolled. This course can no longer be deleted.</span>
+          </div>
+        )}
+        {courseStatus === "PUBLISHED" ? (
+          <Button
+            onClick={onUnpublish}
+            variant="outline"
+            className="w-full"
+          >
+            Unpublish
+          </Button>
+        ) : (
+          <Button
+            onClick={onSubmitForReview}
+            disabled={!canSubmit}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+          >
+            Publish
+          </Button>
+        )}
       </div>
     </aside>
   )

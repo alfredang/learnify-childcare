@@ -29,6 +29,13 @@ export const reviewApplicationSchema = z.object({
     .optional(),
 })
 
+export const onboardingSchema = z.object({
+  teachingExperience: z.enum(["informal", "professional", "online", "other"]),
+  videoExperience: z.enum(["beginner", "some-knowledge", "experienced", "videos-ready"]),
+  audienceSize: z.enum(["none", "small", "sizeable"]),
+})
+
 export type ProfileInput = z.infer<typeof profileSchema>
 export type BecomeInstructorInput = z.infer<typeof becomeInstructorSchema>
 export type ReviewApplicationInput = z.infer<typeof reviewApplicationSchema>
+export type OnboardingInput = z.infer<typeof onboardingSchema>

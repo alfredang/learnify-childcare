@@ -15,10 +15,9 @@ export default function LoginPage() {
         <Link href="/" className="mx-auto">
           <span className="font-bold text-2xl">Learnify</span>
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your credentials to sign in to your account
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Log in to your Learnify account
+        </h1>
       </div>
       <Suspense fallback={<div className="h-[400px]" />}>
         <LoginForm />

@@ -46,7 +46,7 @@ const landingPageSchema = z.object({
   description: z.string().optional(),
   categoryId: z.string().min(1, "Please select a category"),
   level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "ALL_LEVELS"]),
-  language: z.string().default("English (US)"),
+  language: z.string().optional(),
 })
 
 type LandingPageInput = z.infer<typeof landingPageSchema>
@@ -209,7 +209,7 @@ export function LandingPageSection({
       description: course.description || "",
       categoryId: course.categoryId || "",
       level: (course.level as LandingPageInput["level"]) || "ALL_LEVELS",
-      language: course.language || "English (US)",
+      language: course.language || "",
     },
   })
 
@@ -412,12 +412,12 @@ export function LandingPageSection({
                     <Select
                       key={formResetKey}
                       onValueChange={field.onChange}
-                      value={field.value}
+                      value={field.value || undefined}
                       disabled={isSaving}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="-- Select Language --" />
+                          <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

@@ -1,10 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Clock, AlertCircle } from "lucide-react"
-import { InstructorApplicationForm } from "@/components/auth"
 import type { ApplicationState } from "./page"
 
 interface BecomeInstructorCTAProps {
@@ -16,24 +14,7 @@ export function BecomeInstructorCTA({
   appState,
   variant = "hero",
 }: BecomeInstructorCTAProps) {
-  const [dialogOpen, setDialogOpen] = useState(false)
-
-  // Logged out — direct to login
-  if (appState.type === "logged-out") {
-    return (
-      <Button
-        size="lg"
-        className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
-        asChild
-      >
-        <Link href="/login?callbackUrl=/become-instructor">
-          Create Your Course
-        </Link>
-      </Button>
-    )
-  }
-
-  // Pending — disabled state with note
+  // Pending — disabled state with note (backward compat for existing applications)
   if (appState.type === "pending") {
     return (
       <div className="space-y-2">
@@ -42,7 +23,7 @@ export function BecomeInstructorCTA({
           Application Under Review
         </Button>
         {variant === "hero" && (
-          <p className={variant === "hero" ? "text-sm text-purple-200" : "text-sm text-muted-foreground"}>
+          <p className="text-sm text-purple-200">
             We&apos;ll notify you once a decision has been made.
           </p>
         )}
@@ -50,7 +31,7 @@ export function BecomeInstructorCTA({
     )
   }
 
-  // Rejected — reapply button with brief feedback
+  // Rejected — show feedback then link to wizard
   if (appState.type === "rejected") {
     return (
       <div className="space-y-3">
@@ -64,33 +45,27 @@ export function BecomeInstructorCTA({
           <Button
             size="lg"
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
-            onClick={() => setDialogOpen(true)}
+            asChild
           >
-            Create Your Course
+            <Link href="/become-instructor/onboarding">
+              Create Your Course
+            </Link>
           </Button>
         </div>
-        <InstructorApplicationForm
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-        />
       </div>
     )
   }
 
-  // Can-apply — primary CTA
+  // Can-apply — link to onboarding wizard
   return (
-    <>
-      <Button
-        size="lg"
-        className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
-        onClick={() => setDialogOpen(true)}
-      >
+    <Button
+      size="lg"
+      className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
+      asChild
+    >
+      <Link href="/become-instructor/onboarding">
         Create Your Course
-      </Button>
-      <InstructorApplicationForm
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-    </>
+      </Link>
+    </Button>
   )
 }

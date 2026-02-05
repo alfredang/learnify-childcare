@@ -65,8 +65,7 @@ export const APPLICATION_STATUSES = [
 ] as const
 
 export const LANGUAGES = [
-  "English (US)",
-  "English (UK)",
+  "English",
   "Spanish",
   "French",
   "German",

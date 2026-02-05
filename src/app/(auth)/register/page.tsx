@@ -4,8 +4,8 @@ import { Suspense } from "react"
 import { RegisterForm } from "@/components/auth/register-form"
 
 export const metadata: Metadata = {
-  title: "Create Account",
-  description: "Create a new account",
+  title: "Sign Up",
+  description: "Sign up and start learning",
 }
 
 export default function RegisterPage() {
@@ -16,11 +16,8 @@ export default function RegisterPage() {
           <span className="font-bold text-2xl">Learnify</span>
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Create an account
+          Sign up and start learning
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your details below to create your account
-        </p>
       </div>
       <Suspense fallback={<div className="h-[400px]" />}>
         <RegisterForm />

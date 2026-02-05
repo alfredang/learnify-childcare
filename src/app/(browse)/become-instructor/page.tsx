@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { BecomeInstructorCTA } from "./become-instructor-cta"
+import { InstructorSignupForm } from "./instructor-signup-form"
 
 export const metadata: Metadata = {
   title: "Become an Instructor",
@@ -62,7 +63,9 @@ export default async function BecomeInstructorPage() {
     redirect("/instructor")
   }
 
-  // Determine application state
+  const isLoggedIn = !!session?.user
+
+  // Determine application state for logged-in students
   let appState: ApplicationState = { type: "logged-out" }
 
   if (session?.user) {
@@ -88,6 +91,73 @@ export default async function BecomeInstructorPage() {
     }
   }
 
+  // Logged-out users: show Udemy-style signup form
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-64px)]">
+        <div className="flex-1 flex items-center justify-center py-12 px-6">
+          <div className="w-full max-w-4xl grid md:grid-cols-2 gap-12 items-center">
+            {/* Left: Illustration area */}
+            <div className="hidden md:flex flex-col items-center justify-center">
+              <div className="relative w-full max-w-sm">
+                <div className="bg-purple-100 dark:bg-purple-950/30 rounded-2xl p-8 flex items-center justify-center aspect-square">
+                  <svg
+                    viewBox="0 0 200 200"
+                    className="w-full h-full text-purple-600 dark:text-purple-400"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    {/* Simplified instructor illustration */}
+                    <circle cx="100" cy="60" r="30" fill="currentColor" opacity="0.2" />
+                    <circle cx="100" cy="55" r="20" fill="currentColor" opacity="0.3" />
+                    <rect x="70" y="90" width="60" height="70" rx="10" fill="currentColor" opacity="0.2" />
+                    {/* Laptop */}
+                    <rect x="40" y="130" width="120" height="8" rx="2" fill="currentColor" opacity="0.4" />
+                    <rect x="55" y="95" width="90" height="35" rx="4" fill="currentColor" opacity="0.15" />
+                    {/* Play button */}
+                    <polygon points="90,105 90,120 110,112" fill="currentColor" opacity="0.5" />
+                    {/* Decorative elements */}
+                    <circle cx="160" cy="40" r="8" fill="currentColor" opacity="0.15" />
+                    <circle cx="40" cy="50" r="6" fill="currentColor" opacity="0.15" />
+                    <rect x="150" cy="80" width="12" height="12" rx="2" fill="currentColor" opacity="0.15" transform="rotate(15 156 86)" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Signup form */}
+            <div className="w-full max-w-md mx-auto md:mx-0">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    Become a Learnify Instructor
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Discover a supportive community of online instructors. Get
+                    instant access to all course creation resources.
+                  </p>
+                </div>
+
+                <InstructorSignupForm />
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login?callbackUrl=/become-instructor"
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Log in
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Logged-in students: show marketing page with "Create Your Course" CTA
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
@@ -166,14 +236,7 @@ export default async function BecomeInstructorPage() {
         <div className="container">
           <div className="max-w-2xl mx-auto text-center space-y-6">
             <h2 className="text-2xl font-bold">Ready to begin?</h2>
-            {appState.type === "logged-out" ? (
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white" asChild>
-                <Link href="/login?callbackUrl=/become-instructor">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            ) : appState.type === "pending" ? (
+            {appState.type === "pending" ? (
               <Button size="lg" disabled>
                 Application Under Review
               </Button>

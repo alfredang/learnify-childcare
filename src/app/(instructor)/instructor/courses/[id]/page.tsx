@@ -9,9 +9,6 @@ import {
   Loader2,
   ArrowLeft,
   Eye,
-  Globe,
-  EyeOff,
-  Check,
   MoreVertical,
   Trash2,
 } from "lucide-react"
@@ -141,8 +138,17 @@ export default function CourseEditorPage() {
     }
   }
 
-  function handleSubmitForReview() {
-    toggleStatus("PENDING_REVIEW")
+  function handlePublish() {
+    setShowPublishDialog(true)
+  }
+
+  function confirmPublish() {
+    setShowPublishDialog(false)
+    toggleStatus("PUBLISHED")
+  }
+
+  function handleUnpublish() {
+    toggleStatus("DRAFT")
   }
 
   async function handleDeleteCourse() {
@@ -215,40 +221,12 @@ export default function CourseEditorPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/instructor")}
-          >
-            <Check className="h-4 w-4 mr-2" />
-            Confirm
-          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/courses/${course.slug}`}>
               <Eye className="h-4 w-4 mr-2" />
               {course.status === "PUBLISHED" ? "View Live" : "Preview"}
             </Link>
           </Button>
-          {course.status === "PUBLISHED" ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleStatus("DRAFT")}
-              disabled={isSaving}
-            >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Unpublish
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={() => setShowPublishDialog(true)}
-              disabled={isSaving}
-            >
-              <Globe className="h-4 w-4 mr-2" />
-              Publish
-            </Button>
-          )}
           {canDelete && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -277,9 +255,11 @@ export default function CourseEditorPage() {
           currentSection={currentSection}
           onSectionChange={setCurrentSection}
           completionStatus={completionStatus}
-          onSubmitForReview={handleSubmitForReview}
+          onSubmitForReview={handlePublish}
+          onUnpublish={handleUnpublish}
           canSubmit={!!canSubmitForReview}
           courseStatus={course.status}
+          hasEnrollments={(course._count?.enrollments ?? 0) > 0}
         />
 
         {/* Main content */}
@@ -338,15 +318,11 @@ export default function CourseEditorPage() {
               enroll.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
+          <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
             <p>
-              <strong>Warning:</strong> Once your course gains even 1 enrolled
-              student, it can no longer be deleted. You will only be able to
-              unpublish or archive it.
-            </p>
-            <p>
-              Make sure your course content, pricing, and landing page are ready
-              before publishing.
+              <strong>Warning:</strong> If at least 1 student enrols in your
+              course, it can no longer be deleted. Make sure your content,
+              pricing, and landing page are ready before publishing.
             </p>
           </div>
           <DialogFooter>
@@ -358,16 +334,13 @@ export default function CourseEditorPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                setShowPublishDialog(false)
-                toggleStatus("PUBLISHED")
-              }}
+              onClick={confirmPublish}
               disabled={isSaving}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               {isSaving && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              <Globe className="h-4 w-4 mr-2" />
               Publish Course
             </Button>
           </DialogFooter>

@@ -31,6 +31,8 @@ model User {
   linkedin String?
   youtube  String?
 
+  onboardingData Json?
+
   stripeCustomerId       String? @unique
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)

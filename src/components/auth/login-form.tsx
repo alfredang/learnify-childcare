@@ -107,9 +107,14 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold"
+            size="lg"
+            disabled={isLoading}
+          >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in
+            Log in
           </Button>
         </form>
       </Form>
@@ -120,7 +125,7 @@ export function LoginForm() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
+            Other log in options
           </span>
         </div>
       </div>
@@ -129,7 +134,7 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-primary hover:underline">
+        <Link href="/register" className="text-primary font-medium hover:underline">
           Sign up
         </Link>
       </p>

@@ -64,6 +64,17 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/", nextUrl))
   }
 
+  // Require auth for onboarding wizard (must be before public route check)
+  if (pathname === "/become-instructor/onboarding") {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login?callbackUrl=/become-instructor/onboarding", nextUrl))
+    }
+    if (userRole === "INSTRUCTOR" || userRole === "ADMIN") {
+      return NextResponse.redirect(new URL("/instructor", nextUrl))
+    }
+    return NextResponse.next()
+  }
+
   // Allow public routes
   if (isPublicRoute && !isStudentRoute && !isInstructorRoute && !isAdminRoute) {
     return NextResponse.next()
