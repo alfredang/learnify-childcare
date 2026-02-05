@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const footerLinks = {
   platform: [
@@ -20,6 +23,13 @@ const footerLinks = {
 }
 
 export function Footer() {
+  const pathname = usePathname()
+
+  // Hide on instructor/admin routes (they have their own layout)
+  if (pathname.startsWith("/instructor") || pathname.startsWith("/admin")) {
+    return null
+  }
+
   return (
     <footer className="border-t bg-background">
       <div className="container py-12 md:py-16">

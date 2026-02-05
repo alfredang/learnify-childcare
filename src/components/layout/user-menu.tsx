@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
+import { useRef, useState } from "react"
 import { serverSignOut } from "@/app/actions/auth"
 import {
   DropdownMenu,
@@ -19,7 +20,6 @@ import {
   BookOpen,
   Heart,
   Receipt,
-  Settings,
   LogOut,
   GraduationCap,
   LayoutDashboard,
@@ -42,9 +42,25 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const [open, setOpen] = useState(false)
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queryClient = useQueryClient()
 
   if (!user) return null
+
+  const handleMouseEnter = () => {
+    if (closeTimeout.current) {
+      clearTimeout(closeTimeout.current)
+      closeTimeout.current = null
+    }
+    setOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    closeTimeout.current = setTimeout(() => {
+      setOpen(false)
+    }, 300)
+  }
 
   const handleSignOut = async () => {
     queryClient.clear()
@@ -66,8 +82,8 @@ export function UserMenu({ user }: UserMenuProps) {
   }[user.role]
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <DropdownMenu open={open} modal={false}>
+      <DropdownMenuTrigger asChild onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.image || ""} alt={user.name || ""} />
@@ -75,7 +91,15 @@ export function UserMenu({ user }: UserMenuProps) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-72" align="end" forceMount>
+      <DropdownMenuContent
+        className="w-72"
+        align="end"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onEscapeKeyDown={() => setOpen(false)}
+        onInteractOutside={() => setOpen(false)}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         {/* Profile Header */}
         <div className="flex items-center gap-3 p-4 border-b">
           <Avatar className="h-14 w-14">
@@ -122,7 +146,7 @@ export function UserMenu({ user }: UserMenuProps) {
               <DropdownMenuItem asChild>
                 <Link href="/instructor" className="cursor-pointer py-3">
                   <GraduationCap className="mr-3 h-4 w-4" />
-                  <span>Instructor Dashboard</span>
+                  <span>Go to Instructor Dashboard</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

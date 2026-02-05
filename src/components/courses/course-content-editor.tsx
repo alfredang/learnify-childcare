@@ -32,13 +32,14 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// Select imports preserved — re-enable if TEXT/QUIZ lecture types are restored
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
 import {
   DndContext,
   closestCenter,
@@ -970,41 +971,23 @@ export function CourseContentEditor({
                 rows={2}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select
-                  value={lectureType}
-                  onValueChange={(v) => setLectureType(v as "VIDEO" | "TEXT" | "QUIZ")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="VIDEO">Video</SelectItem>
-                    <SelectItem value="TEXT">Text</SelectItem>
-                    <SelectItem value="QUIZ">Quiz</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end pb-1">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="free-preview-add"
-                    checked={lectureIsFree}
-                    onCheckedChange={setLectureIsFree}
-                  />
-                  <Label htmlFor="free-preview-add" className="text-sm">
-                    Free Preview
-                  </Label>
-                </div>
-              </div>
-            </div>
             {lectureType === "VIDEO" && (
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <Label>Video</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Video</Label>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="free-preview-add"
+                        checked={lectureIsFree}
+                        onCheckedChange={setLectureIsFree}
+                      />
+                      <Label htmlFor="free-preview-add" className="text-sm">
+                        Free Preview
+                      </Label>
+                    </div>
+                  </div>
                   <VideoUpload
                     onUploadComplete={(data) => {
                       setVideoData(data)
@@ -1092,41 +1075,23 @@ export function CourseContentEditor({
                 rows={2}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select
-                  value={lectureType}
-                  onValueChange={(v) => setLectureType(v as "VIDEO" | "TEXT" | "QUIZ")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="VIDEO">Video</SelectItem>
-                    <SelectItem value="TEXT">Text</SelectItem>
-                    <SelectItem value="QUIZ">Quiz</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end pb-1">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="free-preview-edit"
-                    checked={lectureIsFree}
-                    onCheckedChange={setLectureIsFree}
-                  />
-                  <Label htmlFor="free-preview-edit" className="text-sm">
-                    Free Preview
-                  </Label>
-                </div>
-              </div>
-            </div>
             {lectureType === "VIDEO" && (
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <Label>Video</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Video</Label>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="free-preview-edit"
+                        checked={lectureIsFree}
+                        onCheckedChange={setLectureIsFree}
+                      />
+                      <Label htmlFor="free-preview-edit" className="text-sm">
+                        Free Preview
+                      </Label>
+                    </div>
+                  </div>
                   <VideoUpload
                     onUploadComplete={(data) => {
                       setVideoData(data)

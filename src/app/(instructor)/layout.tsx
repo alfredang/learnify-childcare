@@ -1,23 +1,10 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import {
-  LayoutDashboard,
-  BookOpen,
-  BarChart3,
-  DollarSign,
-  Star,
-  Settings,
-} from "lucide-react"
-
-const sidebarItems = [
-  { href: "/instructor", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/instructor/courses", icon: BookOpen, label: "My Courses" },
-  { href: "/instructor/analytics", icon: BarChart3, label: "Analytics" },
-  { href: "/instructor/earnings", icon: DollarSign, label: "Earnings" },
-  { href: "/instructor/reviews", icon: Star, label: "Reviews" },
-  { href: "/profile/settings", icon: Settings, label: "Settings" },
-]
+import { Bell } from "lucide-react"
+import { InstructorSidebar } from "@/components/layout/instructor-sidebar"
+import { UserMenu } from "@/components/layout/user-menu"
+import { Button } from "@/components/ui/button"
 
 export default async function InstructorLayout({
   children,
@@ -35,25 +22,25 @@ export default async function InstructorLayout({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r bg-muted/30">
-        <nav className="flex-1 p-4 space-y-1">
-          {sidebarItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+      <InstructorSidebar />
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 flex flex-col overflow-auto">
+        {/* Top bar */}
+        <div className="hidden md:flex items-center justify-end gap-4 px-6 py-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/my-courses">Go to Student Dashboard</Link>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Bell className="h-4 w-4" />
+          </Button>
+          <UserMenu user={JSON.parse(JSON.stringify(session.user))} />
+        </div>
+
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </div>
   )
 }

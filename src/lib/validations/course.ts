@@ -1,5 +1,15 @@
 import { z } from "zod"
 
+export const courseCreateSchema = z.object({
+  title: z
+    .string()
+    .min(5, "Title must be at least 5 characters")
+    .max(60, "Title must be less than 60 characters"),
+  categoryId: z.string().min(1, "Please select a category"),
+})
+
+export type CourseCreateInput = z.infer<typeof courseCreateSchema>
+
 export const courseSchema = z.object({
   title: z
     .string()
@@ -7,7 +17,7 @@ export const courseSchema = z.object({
     .max(100, "Title must be less than 100 characters"),
   subtitle: z
     .string()
-    .max(200, "Subtitle must be less than 200 characters")
+    .max(120, "Subtitle must be less than 120 characters")
     .optional(),
   description: z.string().optional(),
   categoryId: z.string().min(1, "Please select a category"),

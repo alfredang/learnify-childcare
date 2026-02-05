@@ -32,6 +32,11 @@ export function Header() {
     }
   }
 
+  // Hide on instructor/admin routes (they have their own layout)
+  if (pathname.startsWith("/instructor") || pathname.startsWith("/admin")) {
+    return null
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -104,7 +109,7 @@ export function Header() {
                   asChild
                   className="hidden sm:flex"
                 >
-                  <Link href="/instructor">Instructor</Link>
+                  <Link href="/instructor">Go to Instructor Dashboard</Link>
                 </Button>
               )}
               {isAdmin && (

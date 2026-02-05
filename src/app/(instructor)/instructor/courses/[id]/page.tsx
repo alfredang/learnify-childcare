@@ -1,50 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   Loader2,
   ArrowLeft,
-  Save,
   Eye,
-  Settings,
-  BookOpen,
   Globe,
   EyeOff,
+  Check,
+  MoreVertical,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { RichTextEditor } from "@/components/shared/rich-text-editor"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { courseSchema, type CourseInput } from "@/lib/validations/course"
-import { COURSE_LEVELS } from "@/lib/constants"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { EditorSidebar } from "@/components/courses/editor-sidebar"
 import { CourseContentEditor } from "@/components/courses/course-content-editor"
-import { ImageUpload } from "@/components/courses/image-upload"
-import { ArrayFieldEditor } from "@/components/shared/array-field-editor"
+import { IntendedLearnersSection } from "@/components/courses/editor-sections/intended-learners"
+import { LandingPageSection } from "@/components/courses/editor-sections/landing-page"
+import { PricingSection } from "@/components/courses/editor-sections/pricing"
 
 async function fetchCourse(id: string) {
   const res = await fetch(`/api/courses/${id}`)
@@ -52,12 +43,6 @@ async function fetchCourse(id: string) {
     const err = await res.json()
     throw new Error(err.error || "Failed to fetch course")
   }
-  return res.json()
-}
-
-async function fetchCategories() {
-  const res = await fetch("/api/categories")
-  if (!res.ok) throw new Error("Failed to fetch categories")
   return res.json()
 }
 
@@ -75,92 +60,56 @@ export default function CourseEditorPage() {
   const queryClient = useQueryClient()
   const courseId = params.id as string
 
+  const [currentSection, setCurrentSection] = useState("landing-page")
   const [isSaving, setIsSaving] = useState(false)
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
-  const [formResetKey, setFormResetKey] = useState(0)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showPublishDialog, setShowPublishDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const {
     data: courseData,
-    isLoading: courseLoading,
+    isLoading,
     error: courseError,
   } = useQuery({
     queryKey: ["course", courseId],
     queryFn: () => fetchCourse(courseId),
   })
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
-  })
-
   const course = courseData?.course
 
-  const form = useForm<CourseInput>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(courseSchema) as any,
-    defaultValues: {
-      title: "",
-      subtitle: "",
-      description: "",
-      categoryId: "",
-      level: "BEGINNER",
-      language: "English",
-      price: 0,
-      isFree: false,
-      learningOutcomes: [],
-      requirements: [],
-      targetAudience: [],
-    },
-  })
+  const totalLectures = useMemo(() => {
+    if (!course?.sections) return 0
+    return course.sections.reduce(
+      (acc: number, s: { lectures: unknown[] }) => acc + s.lectures.length,
+      0
+    )
+  }, [course?.sections])
 
-  // Populate form when course data AND categories are both loaded so the
-  // category Select has its items available when the value is set
-  useEffect(() => {
-    if (course && categories.length > 0) {
-      form.reset({
-        title: course.title || "",
-        subtitle: course.subtitle || "",
-        description: course.description || "",
-        categoryId: course.categoryId || "",
-        level: course.level || "BEGINNER",
-        language: course.language || "English",
-        price: Number(course.price) || 0,
-        isFree: course.isFree || false,
-        learningOutcomes: course.learningOutcomes || [],
-        requirements: course.requirements || [],
-        targetAudience: course.targetAudience || [],
-      })
-      setThumbnailUrl(course.thumbnail || null)
-      setFormResetKey((k) => k + 1)
+  const completionStatus: Record<string, boolean> = useMemo(() => {
+    if (!course) return {} as Record<string, boolean>
+    return {
+      "intended-learners": (course.learningOutcomes?.length || 0) > 0,
+      curriculum:
+        (course.sections?.length || 0) > 0 && totalLectures > 0,
+      "landing-page":
+        !!course.title &&
+        !!course.description &&
+        !!course.thumbnail &&
+        !!course.categoryId,
+      pricing: true,
     }
-  }, [course, categories.length, form])
+  }, [course, totalLectures])
 
-  async function onSubmit(data: CourseInput) {
-    setIsSaving(true)
-    try {
-      const res = await fetch(`/api/courses/${courseId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          thumbnail: thumbnailUrl,
-        }),
-      })
+  const canSubmitForReview =
+    course?.status === "DRAFT" &&
+    completionStatus["intended-learners"] &&
+    completionStatus["curriculum"] &&
+    completionStatus["landing-page"]
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to update course")
-      }
+  const canDelete = (course?._count?.enrollments ?? 0) === 0
 
-      await queryClient.invalidateQueries({ queryKey: ["course", courseId] })
-      toast.success("Course updated successfully")
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update course"
-      )
-    } finally {
-      setIsSaving(false)
-    }
+  async function handleSaved() {
+    await queryClient.invalidateQueries({ queryKey: ["course", courseId] })
   }
 
   async function toggleStatus(newStatus: string) {
@@ -179,7 +128,9 @@ export default function CourseEditorPage() {
       toast.success(
         newStatus === "PUBLISHED"
           ? "Course published successfully"
-          : "Course unpublished"
+          : newStatus === "PENDING_REVIEW"
+            ? "Course submitted for review"
+            : "Course unpublished"
       )
     } catch (error) {
       toast.error(
@@ -190,7 +141,31 @@ export default function CourseEditorPage() {
     }
   }
 
-  if (courseLoading) {
+  function handleSubmitForReview() {
+    toggleStatus("PENDING_REVIEW")
+  }
+
+  async function handleDeleteCourse() {
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to delete course")
+      }
+      toast.success("Course deleted successfully")
+      router.push("/instructor")
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete course"
+      )
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -209,7 +184,7 @@ export default function CourseEditorPage() {
               : "This course doesn't exist or you don't have access to it."}
           </p>
           <Button asChild>
-            <Link href="/instructor/courses">
+            <Link href="/instructor">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Courses
             </Link>
@@ -219,38 +194,35 @@ export default function CourseEditorPage() {
     )
   }
 
-  const totalLectures = course.sections?.reduce(
-    (acc: number, s: { lectures: unknown[] }) => acc + s.lectures.length,
-    0
-  ) ?? 0
-
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/instructor/courses">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{course.title}</h1>
-              <Badge
-                variant="secondary"
-                className={statusColors[course.status]}
-              >
-                {course.status.replace("_", " ")}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {course.sections?.length ?? 0} sections &middot; {totalLectures}{" "}
-              lectures &middot; {course._count?.enrollments ?? 0} students
-            </p>
-          </div>
+    <div className="flex flex-col h-[calc(100vh-0px)]">
+      {/* Top bar */}
+      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/instructor">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to courses
+          </Link>
+        </Button>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium truncate max-w-[300px]">
+            {course.title}
+          </span>
+          <Badge variant="secondary" className={statusColors[course.status]}>
+            {course.status.replace("_", " ")}
+          </Badge>
         </div>
+
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/instructor")}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Confirm
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/courses/${course.slug}`}>
               <Eye className="h-4 w-4 mr-2" />
@@ -270,292 +242,174 @@ export default function CourseEditorPage() {
           ) : (
             <Button
               size="sm"
-              onClick={() => toggleStatus("PUBLISHED")}
+              onClick={() => setShowPublishDialog(true)}
               disabled={isSaving}
             >
               <Globe className="h-4 w-4 mr-2" />
               Publish
             </Button>
           )}
+          {canDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Course
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
+      </header>
+
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar checklist */}
+        <EditorSidebar
+          currentSection={currentSection}
+          onSectionChange={setCurrentSection}
+          completionStatus={completionStatus}
+          onSubmitForReview={handleSubmitForReview}
+          canSubmit={!!canSubmitForReview}
+          courseStatus={course.status}
+        />
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {currentSection === "intended-learners" && (
+            <IntendedLearnersSection
+              courseId={courseId}
+              learningOutcomes={course.learningOutcomes || []}
+              requirements={course.requirements || []}
+              targetAudience={course.targetAudience || []}
+              onSaved={handleSaved}
+            />
+          )}
+
+          {currentSection === "curriculum" && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-xl font-bold">Curriculum</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Start building your course by creating sections and lectures.
+                </p>
+              </div>
+              <CourseContentEditor
+                courseId={courseId}
+                sections={course.sections || []}
+              />
+            </div>
+          )}
+
+          {currentSection === "landing-page" && (
+            <LandingPageSection
+              courseId={courseId}
+              course={course}
+              onSaved={handleSaved}
+            />
+          )}
+
+          {currentSection === "pricing" && (
+            <PricingSection
+              courseId={courseId}
+              price={Number(course.price)}
+              onSaved={handleSaved}
+            />
+          )}
+
+        </main>
       </div>
 
-      <Separator />
+      {/* Publish confirmation dialog */}
+      <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Publish your course?</DialogTitle>
+            <DialogDescription>
+              Your course will be publicly visible and available for students to
+              enroll.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
+            <p>
+              <strong>Warning:</strong> Once your course gains even 1 enrolled
+              student, it can no longer be deleted. You will only be able to
+              unpublish or archive it.
+            </p>
+            <p>
+              Make sure your course content, pricing, and landing page are ready
+              before publishing.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPublishDialog(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowPublishDialog(false)
+                toggleStatus("PUBLISHED")
+              }}
+              disabled={isSaving}
+            >
+              {isSaving && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              <Globe className="h-4 w-4 mr-2" />
+              Publish Course
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Tabs */}
-      <Tabs defaultValue="details" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="details" className="gap-2">
-            <Settings className="h-4 w-4" />
-            Course Details
-          </TabsTrigger>
-          <TabsTrigger value="content" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            Content
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Details Tab */}
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Course Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Complete Web Development Bootcamp"
-                            disabled={isSaving}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          A clear, descriptive title (5-100 characters)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subtitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subtitle</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Learn to build modern web applications from scratch"
-                            disabled={isSaving}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          A brief summary shown below the title
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select
-                            key={formResetKey}
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={isSaving}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories.map(
-                                (cat: { id: string; name: string }) => (
-                                  <SelectItem key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="level"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Level</FormLabel>
-                          <Select
-                            key={formResetKey}
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={isSaving}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {COURSE_LEVELS.map((level) => (
-                                <SelectItem
-                                  key={level.value}
-                                  value={level.value}
-                                >
-                                  {level.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <RichTextEditor
-                            content={field.value || ""}
-                            onChange={field.onChange}
-                            placeholder="Describe your course in detail. What will students learn? What makes this course unique?"
-                            disabled={isSaving}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price (USD)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              disabled={isSaving}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Set to 0 for a free course
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Language</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="English"
-                              disabled={isSaving}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Thumbnail */}
-                  <FormItem>
-                    <FormLabel>Course Thumbnail</FormLabel>
-                    <FormDescription>
-                      Upload an eye-catching image. Recommended: 750x422px (16:9
-                      ratio)
-                    </FormDescription>
-                    <ImageUpload
-                      onUploadComplete={({ imageUrl }) =>
-                        setThumbnailUrl(imageUrl)
-                      }
-                      existingImageUrl={thumbnailUrl}
-                      disabled={isSaving}
-                    />
-                  </FormItem>
-
-                  <Separator />
-
-                  {/* Learning Outcomes */}
-                  <ArrayFieldEditor
-                    form={form}
-                    name="learningOutcomes"
-                    label="What students will learn"
-                    placeholder="e.g., Build full-stack web applications"
-                    disabled={isSaving}
-                  />
-
-                  {/* Requirements */}
-                  <ArrayFieldEditor
-                    form={form}
-                    name="requirements"
-                    label="Requirements"
-                    placeholder="e.g., Basic knowledge of HTML and CSS"
-                    disabled={isSaving}
-                  />
-
-                  {/* Target Audience */}
-                  <ArrayFieldEditor
-                    form={form}
-                    name="targetAudience"
-                    label="Who this course is for"
-                    placeholder="e.g., Beginner web developers"
-                    disabled={isSaving}
-                  />
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.push("/instructor/courses")}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="mr-2 h-4 w-4" />
-                      )}
-                      Save Changes
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Content Tab */}
-        <TabsContent value="content">
-          <CourseContentEditor
-            courseId={courseId}
-            sections={course.sections || []}
-          />
-        </TabsContent>
-      </Tabs>
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete course?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{course.title}&quot;? This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-200">
+            <strong>Important:</strong> Once a course has even 1 enrolled
+            student, it can no longer be deleted. You will only be able to
+            archive it.
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCourse}
+              disabled={isDeleting}
+            >
+              {isDeleting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Delete Course
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

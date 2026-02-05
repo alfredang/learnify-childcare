@@ -2,12 +2,13 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
 import {
   Select,
   SelectContent,
@@ -15,334 +16,294 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { RichTextEditor } from "@/components/shared/rich-text-editor"
-import { ArrayFieldEditor } from "@/components/shared/array-field-editor"
-import { ImageUpload } from "@/components/courses/image-upload"
-import { courseSchema, type CourseInput } from "@/lib/validations/course"
-import { COURSE_LEVELS } from "@/lib/constants"
-import { useQuery } from "@tanstack/react-query"
+import { cn } from "@/lib/utils"
 
-async function getCategories() {
-  const response = await fetch("/api/categories")
-  if (!response.ok) throw new Error("Failed to fetch categories")
-  return response.json()
+const TOTAL_STEPS = 3
+
+async function fetchCategories() {
+  const res = await fetch("/api/categories")
+  if (!res.ok) throw new Error("Failed to fetch categories")
+  return res.json()
 }
 
-export default function CreateCoursePage() {
+export default function CreateCourseWizardPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const [step, setStep] = useState(1)
+  const [title, setTitle] = useState("")
+  const [categoryId, setCategoryId] = useState("")
+  const [timeCommitment, setTimeCommitment] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: getCategories,
+    queryFn: fetchCategories,
   })
 
-  const form = useForm<CourseInput>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(courseSchema) as any,
-    defaultValues: {
-      title: "",
-      subtitle: "",
-      description: "",
-      categoryId: "",
-      level: "BEGINNER",
-      language: "English",
-      price: 0,
-      isFree: false,
-      learningOutcomes: [],
-      requirements: [],
-      targetAudience: [],
-    },
-  })
+  function canContinue() {
+    switch (step) {
+      case 1:
+        return title.trim().length >= 5 && title.trim().length <= 60
+      case 2:
+        return !!categoryId
+      case 3:
+        return true
+      default:
+        return false
+    }
+  }
 
-  async function onSubmit(data: CourseInput) {
-    setIsLoading(true)
-
+  async function handleCreate() {
+    setIsSubmitting(true)
     try {
-      const response = await fetch("/api/courses", {
+      const res = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          thumbnail: thumbnailUrl,
-        }),
+        body: JSON.stringify({ title: title.trim(), categoryId }),
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to create course")
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.message || "Failed to create course")
       }
 
-      const course = await response.json()
-      toast.success("Course created successfully!")
+      const course = await res.json()
+      toast.success("Course created!")
       router.push(`/instructor/courses/${course.id}`)
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create course"
       )
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
+    }
+  }
+
+  function handleNext() {
+    if (step < TOTAL_STEPS) {
+      setStep((s) => s + 1)
+    } else {
+      handleCreate()
     }
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create New Course</h1>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/instructor"
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+          >
+            <X className="h-4 w-4" />
+            Exit
+          </Link>
+        </div>
+        <span className="text-sm font-medium">
+          Step {step} of {TOTAL_STEPS}
+        </span>
+        <div className="w-16" />
+      </div>
+
+      {/* Progress bar */}
+      <Progress value={(step / TOTAL_STEPS) * 100} className="h-1 rounded-none" />
+
+      {/* Step content */}
+      <div className="flex-1 flex items-center justify-center overflow-y-auto">
+        <div className="w-full max-w-xl px-6 py-12">
+          {step === 1 && (
+            <StepTitle value={title} onChange={setTitle} />
+          )}
+          {step === 2 && (
+            <StepCategory
+              value={categoryId}
+              onChange={setCategoryId}
+              categories={categories}
+            />
+          )}
+          {step === 3 && (
+            <StepTimeCommitment value={timeCommitment} onChange={setTimeCommitment} />
+          )}
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-t">
+        {step > 1 ? (
+          <Button
+            variant="outline"
+            onClick={() => setStep((s) => s - 1)}
+            disabled={isSubmitting}
+          >
+            Previous
+          </Button>
+        ) : (
+          <div />
+        )}
+        <Button
+          onClick={handleNext}
+          disabled={!canContinue() || isSubmitting}
+          className={cn(
+            step === TOTAL_STEPS && "bg-purple-600 hover:bg-purple-700 text-white"
+          )}
+        >
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {step === TOTAL_STEPS ? "Create Course" : "Continue"}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Step Components                                                    */
+/* ------------------------------------------------------------------ */
+
+function StepTitle({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const charCount = value.length
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">How about a working title?</h1>
         <p className="text-muted-foreground">
-          Fill in the details to create your course
+          It&apos;s ok if you can&apos;t think of a good title now. You can change it
+          later.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Course Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Course Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Complete Web Development Bootcamp"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A clear, descriptive title (5-100 characters)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <div className="mt-8 space-y-2">
+        <div className="relative">
+          <Input
+            value={value}
+            onChange={(e) => {
+              if (e.target.value.length <= 60) {
+                onChange(e.target.value)
+              }
+            }}
+            placeholder="e.g. Learn Photoshop CS6 from Scratch"
+            className="pr-16 text-base py-6"
+            autoFocus
+          />
+          <span
+            className={cn(
+              "absolute right-3 top-1/2 -translate-y-1/2 text-sm",
+              charCount > 55
+                ? "text-orange-500"
+                : "text-muted-foreground"
+            )}
+          >
+            {charCount}/60
+          </span>
+        </div>
+        {charCount > 0 && charCount < 5 && (
+          <p className="text-sm text-destructive">
+            Title must be at least 5 characters
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
-              <FormField
-                control={form.control}
-                name="subtitle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subtitle</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Learn to build modern web applications from scratch"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      A brief summary shown below the title
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+function StepCategory({
+  value,
+  onChange,
+  categories,
+}: {
+  value: string
+  onChange: (v: string) => void
+  categories: { id: string; name: string }[]
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">
+          What category best fits the knowledge you&apos;ll share?
+        </h1>
+        <p className="text-muted-foreground">
+          If you&apos;re not sure about the right category, you can change it later.
+        </p>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isLoading}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map(
-                            (category: { id: string; name: string }) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <div className="mt-8 flex justify-center">
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="w-full max-w-sm py-6 text-base">
+            <SelectValue placeholder="Choose a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
 
-                <FormField
-                  control={form.control}
-                  name="level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Level</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isLoading}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {COURSE_LEVELS.map((level) => (
-                            <SelectItem key={level.value} value={level.value}>
-                              {level.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+function StepTimeCommitment({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const options = [
+    {
+      id: "0-2",
+      label: "I'm very busy right now (0-2 hours)",
+    },
+    {
+      id: "2-4",
+      label: "I'll work on this on the side (2-4 hours)",
+    },
+    {
+      id: "4+",
+      label: "I have lots of flexibility (4+ hours)",
+    },
+    {
+      id: "undecided",
+      label: "I haven't decided if I have time",
+    },
+  ]
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        content={field.value || ""}
-                        onChange={field.onChange}
-                        placeholder="Describe your course in detail. What will students learn? What makes this course unique?"
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">
+          How much time can you spend creating your course per week?
+        </h1>
+        <p className="text-muted-foreground">
+          There&apos;s no wrong answer. We can help you achieve your goals.
+        </p>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          disabled={isLoading}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Set to 0 for a free course
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Language</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="English"
-                          disabled={isLoading}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Thumbnail */}
-              <FormItem>
-                <FormLabel>Course Thumbnail</FormLabel>
-                <FormDescription>
-                  Upload an eye-catching image. Recommended: 750x422px (16:9
-                  ratio)
-                </FormDescription>
-                <ImageUpload
-                  onUploadComplete={({ imageUrl }) => setThumbnailUrl(imageUrl)}
-                  existingImageUrl={thumbnailUrl}
-                  disabled={isLoading}
-                />
-              </FormItem>
-
-              <Separator />
-
-              {/* Learning Outcomes */}
-              <ArrayFieldEditor
-                form={form}
-                name="learningOutcomes"
-                label="What students will learn"
-                placeholder="e.g., Build full-stack web applications"
-                disabled={isLoading}
-              />
-
-              {/* Requirements */}
-              <ArrayFieldEditor
-                form={form}
-                name="requirements"
-                label="Requirements"
-                placeholder="e.g., Basic knowledge of HTML and CSS"
-                disabled={isLoading}
-              />
-
-              {/* Target Audience */}
-              <ArrayFieldEditor
-                form={form}
-                name="targetAudience"
-                label="Who this course is for"
-                placeholder="e.g., Beginner web developers"
-                disabled={isLoading}
-              />
-
-              <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Create Course
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <div className="mt-8 space-y-3 max-w-md mx-auto">
+        {options.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => onChange(opt.id)}
+            className={cn(
+              "w-full text-left rounded-lg border-2 px-5 py-4 transition-colors cursor-pointer",
+              value === opt.id
+                ? "border-purple-600 bg-purple-50 dark:bg-purple-950/20"
+                : "border-border hover:border-muted-foreground/50"
+            )}
+          >
+            <span className="text-sm font-medium">{opt.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

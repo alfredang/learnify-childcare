@@ -64,6 +64,32 @@ export const APPLICATION_STATUSES = [
   { value: "REJECTED", label: "Rejected" },
 ] as const
 
+export const LANGUAGES = [
+  "English (US)",
+  "English (UK)",
+  "Spanish",
+  "French",
+  "German",
+  "Portuguese",
+  "Japanese",
+  "Korean",
+  "Chinese",
+  "Arabic",
+  "Hindi",
+  "Italian",
+  "Dutch",
+  "Russian",
+  "Turkish",
+  "Polish",
+  "Vietnamese",
+  "Thai",
+  "Indonesian",
+  "Swedish",
+] as const
+
+export const SUBTITLE_MAX_LENGTH = 120
+export const LEARNING_OUTCOME_MAX_LENGTH = 160
+
 export const PLATFORM_FEE_PERCENT = 30
 export const MIN_COURSE_PRICE = 0
 export const MAX_COURSE_PRICE = 99999

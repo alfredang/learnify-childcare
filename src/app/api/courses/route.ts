@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { courseSchema } from "@/lib/validations/course"
+import { courseCreateSchema } from "@/lib/validations/course"
 import slugify from "slugify"
 
 export async function GET(request: Request) {
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const validatedData = courseSchema.safeParse(body)
+    const validatedData = courseCreateSchema.safeParse(body)
 
     if (!validatedData.success) {
       return NextResponse.json(
@@ -91,18 +91,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const {
-      title,
-      subtitle,
-      description,
-      categoryId,
-      level,
-      price,
-      language,
-      learningOutcomes,
-      requirements,
-      targetAudience,
-    } = validatedData.data
+    const { title, categoryId } = validatedData.data
 
     // Generate unique slug
     let slug = slugify(title, { lower: true, strict: true })
@@ -115,18 +104,12 @@ export async function POST(request: Request) {
       data: {
         title,
         slug,
-        subtitle,
-        description,
         categoryId,
-        level,
-        price,
-        isFree: price === 0,
         instructorId: session.user.id,
-        language: language || "English",
-        learningOutcomes: learningOutcomes || [],
-        requirements: requirements || [],
-        targetAudience: targetAudience || [],
-        ...(body.thumbnail !== undefined && { thumbnail: body.thumbnail }),
+        level: "ALL_LEVELS",
+        language: "English",
+        price: 0,
+        isFree: true,
       },
     })
 
