@@ -4,34 +4,29 @@ import type {
   Section,
   Lecture,
   Enrollment,
-  Review,
   Category,
-  Purchase,
-  InstructorApplication,
+  Organization,
+  CourseAssignment,
 } from "@prisma/client"
 
-export type CourseWithInstructor = Course & {
-  instructor: Pick<User, "id" | "name" | "image" | "headline">
+export type CourseWithCategory = Course & {
   category: Category
+  createdBy: Pick<User, "id" | "name">
 }
 
 export type CourseWithDetails = Course & {
-  instructor: Pick<User, "id" | "name" | "image" | "headline" | "bio">
   category: Category
+  createdBy: Pick<User, "id" | "name">
   sections: (Section & {
     lectures: Lecture[]
   })[]
-  reviews: (Review & {
-    user: Pick<User, "id" | "name" | "image">
-  })[]
   _count: {
     enrollments: number
-    reviews: number
   }
 }
 
 export type EnrolledCourse = Enrollment & {
-  course: CourseWithInstructor & {
+  course: CourseWithCategory & {
     sections: (Section & {
       lectures: Lecture[]
     })[]
@@ -39,7 +34,7 @@ export type EnrolledCourse = Enrollment & {
 }
 
 export type CourseForLearning = Course & {
-  instructor: Pick<User, "id" | "name" | "image">
+  createdBy: Pick<User, "id" | "name">
   sections: (Section & {
     lectures: (Lecture & {
       progress?: {
@@ -50,20 +45,23 @@ export type CourseForLearning = Course & {
   })[]
 }
 
-export type InstructorCourse = Course & {
-  category: Category
+export type LearnerDashboardCourse = CourseAssignment & {
+  course: CourseWithCategory
+  enrollment?: Enrollment | null
+}
+
+export type CourseAssignmentWithDetails = CourseAssignment & {
+  learner: Pick<User, "id" | "name" | "email" | "image" | "jobTitle" | "staffId">
+  course: Pick<Course, "id" | "title" | "slug" | "thumbnail" | "cpdPoints" | "estimatedHours">
+  assignedBy: Pick<User, "id" | "name">
+}
+
+export type OrganizationWithUsers = Organization & {
+  users: Pick<User, "id" | "name" | "email" | "role" | "jobTitle" | "staffId">[]
   _count: {
-    enrollments: number
-    reviews: number
+    users: number
+    assignments: number
   }
-}
-
-export type ReviewWithUser = Review & {
-  user: Pick<User, "id" | "name" | "image">
-}
-
-export type PurchaseWithCourse = Purchase & {
-  course: Pick<Course, "id" | "title" | "slug" | "thumbnail">
 }
 
 export interface PaginatedResponse<T> {
@@ -74,33 +72,6 @@ export interface PaginatedResponse<T> {
     pageSize: number
     totalPages: number
   }
-}
-
-export interface CourseFilters {
-  search?: string
-  category?: string
-  level?: string
-  price?: string
-  rating?: string
-  sort?: string
-  page?: number
-}
-
-export type FavouriteCourse = {
-  id: string
-  createdAt: Date
-  course: CourseWithInstructor
-}
-
-export type CartItemCourse = {
-  id: string
-  createdAt: Date
-  course: CourseWithInstructor
-}
-
-export type ApplicationWithUser = InstructorApplication & {
-  user: Pick<User, "id" | "name" | "email" | "image">
-  reviewedBy?: Pick<User, "id" | "name"> | null
 }
 
 export interface ApiError {

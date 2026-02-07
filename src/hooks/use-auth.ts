@@ -9,8 +9,9 @@ export function useAuth() {
     user: session?.user,
     isLoading: status === "loading",
     isAuthenticated: status === "authenticated",
-    isStudent: session?.user?.role === "STUDENT",
-    isInstructor: session?.user?.role === "INSTRUCTOR",
-    isAdmin: session?.user?.role === "ADMIN",
+    isLearner: session?.user?.role === "LEARNER",
+    isCorporateAdmin: session?.user?.role === "CORPORATE_ADMIN",
+    isSuperAdmin: session?.user?.role === "SUPER_ADMIN",
+    organizationId: session?.user?.organizationId,
   }
 }

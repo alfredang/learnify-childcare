@@ -10,6 +10,7 @@ import type { UserRole } from "@prisma/client"
 declare module "next-auth" {
   interface User {
     role?: UserRole
+    organizationId?: string | null
   }
   interface Session {
     user: {
@@ -18,6 +19,7 @@ declare module "next-auth" {
       name?: string | null
       image?: string | null
       role: UserRole
+      organizationId?: string | null
     }
   }
 }
@@ -26,6 +28,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id: string
     role: UserRole
+    organizationId?: string | null
   }
 }
 
@@ -80,6 +83,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
+          organizationId: user.organizationId,
         }
       },
     }),
@@ -88,16 +92,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id as string
-        token.role = user.role || "STUDENT"
+        token.role = user.role || "LEARNER"
+        token.organizationId = user.organizationId || null
       }
 
       if (trigger === "update") {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true },
+          select: { role: true, organizationId: true },
         })
         if (dbUser) {
           token.role = dbUser.role
+          token.organizationId = dbUser.organizationId
         }
       }
 
@@ -107,6 +113,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as UserRole
+        session.user.organizationId = token.organizationId as string | null
       }
       return session
     },

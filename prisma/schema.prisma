@@ -10,9 +10,9 @@ datasource db {
 // ==================== USER & AUTH ====================
 
 enum UserRole {
-  STUDENT
-  INSTRUCTOR
-  ADMIN
+  LEARNER
+  CORPORATE_ADMIN
+  SUPER_ADMIN
 }
 
 model User {
@@ -23,40 +23,31 @@ model User {
   name          String?
   image         String?
   bio           String?   @db.Text
-  headline      String?
-  role          UserRole  @default(STUDENT)
+  role          UserRole  @default(LEARNER)
 
-  website  String?
-  twitter  String?
-  linkedin String?
-  youtube  String?
+  jobTitle String?
+  staffId  String?
 
-  onboardingData Json?
-
-  stripeCustomerId       String? @unique
-  stripeConnectAccountId String? @unique
-  stripeConnectOnboarded Boolean @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   accounts     Account[]
   sessions     Session[]
-  courses      Course[]
-  earnings     Earning[]
   enrollments  Enrollment[]
   progress     LectureProgress[]
-  reviews      Review[]
-  wishlist     Wishlist[]
-  cartItems    CartItem[]
-  purchases    Purchase[]
   certificates Certificate[]
 
-  instructorApplications InstructorApplication[]
-  reviewedApplications   InstructorApplication[] @relation("ReviewedApplications")
+  createdCourses Course[]
+
+  assignments   CourseAssignment[]
+  assignedByMe  CourseAssignment[] @relation("AssignedBy")
 
   @@index([email])
   @@index([role])
+  @@index([organizationId])
 }
 
 model Account {
@@ -107,33 +98,28 @@ model PasswordResetToken {
   @@index([email])
 }
 
-// ==================== INSTRUCTOR APPLICATIONS ====================
+// ==================== ORGANIZATION ====================
 
-enum ApplicationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
+model Organization {
+  id             String  @id @default(cuid())
+  name           String
+  slug           String  @unique
+  contactName    String?
+  contactEmail   String?
+  phone          String?
+  address        String? @db.Text
+  licenseNumber  String?
+  maxLearners    Int     @default(50)
+  billingEnabled Boolean @default(false)
+  stripeCustomerId String? @unique
 
-model InstructorApplication {
-  id        String            @id @default(cuid())
-  headline  String
-  bio       String            @db.Text
-  status    ApplicationStatus @default(PENDING)
-  adminNote String?           @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  reviewedAt DateTime?
+  users       User[]
+  assignments CourseAssignment[]
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  reviewedById String?
-  reviewedBy   User?  @relation("ReviewedApplications", fields: [reviewedById], references: [id])
-
-  @@index([userId])
-  @@index([status])
+  @@index([slug])
 }
 
 // ==================== COURSE STRUCTURE ====================
@@ -147,9 +133,7 @@ enum CourseLevel {
 
 enum CourseStatus {
   DRAFT
-  PENDING_REVIEW
   PUBLISHED
-  REJECTED
   ARCHIVED
 }
 
@@ -175,56 +159,41 @@ model Course {
   subtitle    String?
   description String? @db.Text
 
-  thumbnail       String?
-  previewVideoUrl String?
+  thumbnail String?
 
-  price         Decimal  @default(0) @db.Decimal(10, 2)
-  discountPrice Decimal? @db.Decimal(10, 2)
-  isFree        Boolean  @default(false)
+  priceSgd      Decimal @default(60) @db.Decimal(10, 2)
+  cpdPoints     Int     @default(0)
+  estimatedHours Decimal @default(2) @db.Decimal(4, 1)
+  scormVersion  String  @default("2.0")
 
   level    CourseLevel @default(ALL_LEVELS)
   language String      @default("English")
 
   learningOutcomes String[]
-  requirements     String[]
-  targetAudience   String[]
 
-  status          CourseStatus @default(DRAFT)
-  publishedAt     DateTime?
-  rejectionReason String?
+  status      CourseStatus @default(DRAFT)
+  publishedAt DateTime?
 
-  totalDuration Int     @default(0)
-  totalLectures Int     @default(0)
-  totalStudents Int     @default(0)
-  averageRating Decimal @default(0) @db.Decimal(2, 1)
-  totalReviews  Int     @default(0)
-
-  isFeatured    Boolean @default(false)
-  featuredOrder Int?
+  totalDuration Int @default(0)
+  totalLectures Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  instructorId String
-  instructor   User   @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
   sections    Section[]
   enrollments Enrollment[]
-  reviews     Review[]
-  wishlist    Wishlist[]
-  cartItems   CartItem[]
-  purchases   Purchase[]
+  assignments CourseAssignment[]
 
   @@index([slug])
-  @@index([instructorId])
+  @@index([createdById])
   @@index([categoryId])
   @@index([status])
-  @@index([isFeatured])
-  @@index([averageRating])
-  @@index([totalStudents])
 }
 
 model Section {
@@ -264,34 +233,16 @@ model Lecture {
 
   content String? @db.Text
 
-  isFreePreview Boolean @default(false)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   sectionId String
   section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
-  resources Resource[]
-  progress  LectureProgress[]
+  progress LectureProgress[]
 
   @@index([sectionId])
   @@index([position])
-}
-
-model Resource {
-  id   String  @id @default(cuid())
-  name String
-  type String
-  url  String
-  size Int?
-
-  createdAt DateTime @default(now())
-
-  lectureId String
-  lecture   Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
-
-  @@index([lectureId])
 }
 
 // ==================== ENROLLMENT & PROGRESS ====================
@@ -302,6 +253,15 @@ model Enrollment {
   progress       Int       @default(0)
   completedAt    DateTime?
   lastAccessedAt DateTime?
+
+  assignedById String?
+  assignedAt   DateTime?
+  deadline     DateTime?
+
+  scormStatus      String  @default("not attempted")
+  scormScore       Decimal? @db.Decimal(5, 2)
+  scormTotalTime   String?
+  scormSuspendData String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -323,6 +283,11 @@ model LectureProgress {
   watchedDuration Int     @default(0)
   lastPosition    Int     @default(0)
 
+  scormLessonStatus   String?
+  scormSessionTime    String?
+  scormLessonLocation String?
+  scormSuspendData    String? @db.Text
+
   completedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -343,8 +308,10 @@ model Certificate {
   certificateId String   @unique
   issuedAt      DateTime @default(now())
 
-  courseName     String
-  instructorName String
+  courseName       String
+  organizationName String?
+  cpdPoints        Int      @default(0)
+  expiresAt        DateTime?
 
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -354,139 +321,41 @@ model Certificate {
   @@index([certificateId])
 }
 
-// ==================== REVIEWS & RATINGS ====================
+// ==================== COURSE ASSIGNMENT ====================
 
-model Review {
-  id      String  @id @default(cuid())
-  rating  Int
-  comment String? @db.Text
-
-  response    String?   @db.Text
-  respondedAt DateTime?
-
-  isApproved Boolean @default(true)
-  isFeatured Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@index([courseId])
-  @@index([rating])
-}
-
-// ==================== WISHLIST ====================
-
-model Wishlist {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@index([userId])
-}
-
-// ==================== CART ====================
-
-model CartItem {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@index([userId])
-}
-
-// ==================== PAYMENTS & EARNINGS ====================
-
-enum PurchaseStatus {
-  PENDING
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
   COMPLETED
-  REFUNDED
-  FAILED
+  OVERDUE
 }
 
-model Purchase {
-  id String @id @default(cuid())
+model CourseAssignment {
+  id              String           @id @default(cuid())
+  deadline        DateTime?
+  status          AssignmentStatus @default(ASSIGNED)
+  assignedAt      DateTime         @default(now())
+  notes           String?          @db.Text
+  stripeSessionId String?
 
-  amount            Int
-  platformFee       Int
-  instructorEarning Int
+  learnerId String
+  learner   User   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
 
-  stripePaymentIntentId String? @unique
-  stripeSessionId       String?
+  courseId String
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  status PurchaseStatus @default(PENDING)
+  assignedById String
+  assignedBy   User   @relation("AssignedBy", fields: [assignedById], references: [id])
 
-  courseName  String
-  coursePrice Decimal @db.Decimal(10, 2)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
+  @@unique([learnerId, courseId])
+  @@index([learnerId])
   @@index([courseId])
-  @@index([stripePaymentIntentId])
+  @@index([organizationId])
   @@index([status])
-}
-
-enum PayoutStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-model Earning {
-  id     String @id @default(cuid())
-  amount Int
-
-  periodStart DateTime
-  periodEnd   DateTime
-
-  payoutStatus     PayoutStatus @default(PENDING)
-  stripeTransferId String?
-  paidAt           DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([payoutStatus])
-}
-
-// ==================== PLATFORM SETTINGS ====================
-
-model PlatformSettings {
-  id                 String  @id @default(cuid())
-  platformFeePercent Int     @default(30)
-  minCoursePrice     Decimal @default(0) @db.Decimal(10, 2)
-  maxCoursePrice     Decimal @default(999.99) @db.Decimal(10, 2)
-
-  updatedAt DateTime @updatedAt
 }

@@ -18,16 +18,10 @@ import { Badge } from "@/components/ui/badge"
 import {
   User,
   BookOpen,
-  Heart,
-  Receipt,
   LogOut,
-  GraduationCap,
   LayoutDashboard,
-  Bell,
-  MessageSquare,
-  CreditCard,
   Award,
-  FileText,
+  Building2,
 } from "lucide-react"
 import type { UserRole } from "@prisma/client"
 
@@ -76,9 +70,9 @@ export function UserMenu({ user }: UserMenuProps) {
     .slice(0, 2)
 
   const roleLabel = {
-    STUDENT: "Learner",
-    INSTRUCTOR: "Instructor",
-    ADMIN: "Administrator",
+    LEARNER: "Learner",
+    CORPORATE_ADMIN: "Corporate Admin",
+    SUPER_ADMIN: "Super Admin",
   }[user.role]
 
   return (
@@ -118,15 +112,15 @@ export function UserMenu({ user }: UserMenuProps) {
         {/* Learning Section */}
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/my-courses" className="cursor-pointer py-3">
-              <BookOpen className="mr-3 h-4 w-4" />
-              <span>My Learning</span>
+            <Link href="/dashboard" className="cursor-pointer py-3">
+              <LayoutDashboard className="mr-3 h-4 w-4" />
+              <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/favourites" className="cursor-pointer py-3">
-              <Heart className="mr-3 h-4 w-4" />
-              <span>Favourites</span>
+            <Link href="/my-courses" className="cursor-pointer py-3">
+              <BookOpen className="mr-3 h-4 w-4" />
+              <span>My Courses</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
@@ -137,26 +131,25 @@ export function UserMenu({ user }: UserMenuProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
-
-        {/* Instructor Section */}
-        {(user.role === "INSTRUCTOR" || user.role === "ADMIN") && (
+        {/* Corporate Admin Section */}
+        {(user.role === "CORPORATE_ADMIN" || user.role === "SUPER_ADMIN") && (
           <>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/instructor" className="cursor-pointer py-3">
-                  <GraduationCap className="mr-3 h-4 w-4" />
-                  <span>Go to Instructor Dashboard</span>
+                <Link href="/corporate" className="cursor-pointer py-3">
+                  <Building2 className="mr-3 h-4 w-4" />
+                  <span>Corporate Dashboard</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
           </>
         )}
 
-        {/* Admin Section */}
-        {user.role === "ADMIN" && (
+        {/* Super Admin Section */}
+        {user.role === "SUPER_ADMIN" && (
           <>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href="/admin" className="cursor-pointer py-3">
@@ -165,25 +158,8 @@ export function UserMenu({ user }: UserMenuProps) {
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
           </>
         )}
-
-        {/* Notifications & Messages */}
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/notifications" className="cursor-pointer py-3">
-              <Bell className="mr-3 h-4 w-4" />
-              <span>Notifications</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/messages" className="cursor-pointer py-3">
-              <MessageSquare className="mr-3 h-4 w-4" />
-              <span>Messages</span>
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
@@ -193,24 +169,6 @@ export function UserMenu({ user }: UserMenuProps) {
             <Link href="/account" className="cursor-pointer py-3">
               <User className="mr-3 h-4 w-4" />
               <span>Account Settings</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/billing" className="cursor-pointer py-3">
-              <CreditCard className="mr-3 h-4 w-4" />
-              <span>Payment Methods</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/purchases" className="cursor-pointer py-3">
-              <Receipt className="mr-3 h-4 w-4" />
-              <span>Purchase History</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account/invoices" className="cursor-pointer py-3">
-              <FileText className="mr-3 h-4 w-4" />
-              <span>Invoices</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

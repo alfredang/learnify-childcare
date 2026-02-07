@@ -1,25 +1,12 @@
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 
-const publicRoutes = [
-  "/",
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/verify-email",
-  "/courses",
-  "/categories",
-  "/instructors",
-  "/search",
-  "/about",
-  "/contact",
-  "/become-instructor",
-]
+const publicRoutes = ["/", "/login", "/register", "/forgot-password"]
 
 const authRoutes = ["/login", "/register", "/forgot-password"]
 
-const studentRoutes = ["/my-courses", "/favourites", "/purchases", "/profile"]
-const instructorRoutes = ["/instructor"]
+const learnerRoutes = ["/dashboard", "/my-courses", "/certificates", "/account"]
+const corporateRoutes = ["/corporate"]
 const adminRoutes = ["/admin"]
 
 export default auth((req) => {
@@ -29,21 +16,18 @@ export default auth((req) => {
 
   const pathname = nextUrl.pathname
 
-  // Check if it's a public route (exact match or starts with public path)
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
 
-  // Check if it's an auth route (login, register, etc.)
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
 
-  // Check route types
-  const isStudentRoute = studentRoutes.some(
+  const isLearnerRoute = learnerRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
-  const isInstructorRoute = instructorRoutes.some(
+  const isCorporateRoute = corporateRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
   const isAdminRoute = adminRoutes.some(
@@ -61,22 +45,17 @@ export default auth((req) => {
 
   // Redirect logged-in users away from auth routes
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/", nextUrl))
-  }
-
-  // Require auth for onboarding wizard (must be before public route check)
-  if (pathname === "/become-instructor/onboarding") {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login?callbackUrl=/become-instructor/onboarding", nextUrl))
+    if (userRole === "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/admin", nextUrl))
     }
-    if (userRole === "INSTRUCTOR" || userRole === "ADMIN") {
-      return NextResponse.redirect(new URL("/instructor", nextUrl))
+    if (userRole === "CORPORATE_ADMIN") {
+      return NextResponse.redirect(new URL("/corporate", nextUrl))
     }
-    return NextResponse.next()
+    return NextResponse.redirect(new URL("/dashboard", nextUrl))
   }
 
   // Allow public routes
-  if (isPublicRoute && !isStudentRoute && !isInstructorRoute && !isAdminRoute) {
+  if (isPublicRoute && !isLearnerRoute && !isCorporateRoute && !isAdminRoute) {
     return NextResponse.next()
   }
 
@@ -86,17 +65,17 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl))
   }
 
-  // Check instructor routes
-  if (isInstructorRoute) {
-    if (userRole !== "INSTRUCTOR" && userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/become-instructor", nextUrl))
+  // Check corporate routes
+  if (isCorporateRoute) {
+    if (userRole !== "CORPORATE_ADMIN" && userRole !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl))
     }
   }
 
   // Check admin routes
   if (isAdminRoute) {
-    if (userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", nextUrl))
+    if (userRole !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl))
     }
   }
 

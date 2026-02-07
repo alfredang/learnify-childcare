@@ -14,7 +14,7 @@ export function ArrayFieldEditor({
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form: any
-  name: "learningOutcomes" | "requirements" | "targetAudience"
+  name: "learningOutcomes"
   label: string
   placeholder: string
   disabled: boolean

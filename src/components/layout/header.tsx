@@ -2,38 +2,20 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, Menu, Heart } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { UserMenu } from "./user-menu"
 import { MobileNav } from "./mobile-nav"
-import { CartDropdown } from "./cart-dropdown"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-
-const mainNav = [
-  { href: "/courses", label: "Courses" },
-  { href: "/categories", label: "Categories" },
-]
 
 export function Header() {
   const pathname = usePathname()
-  const { user, isAuthenticated, isInstructor, isAdmin } = useAuth()
-  const [searchQuery, setSearchQuery] = useState("")
-  const router = useRouter()
+  const { user, isAuthenticated, isCorporateAdmin, isSuperAdmin } = useAuth()
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-    }
-  }
-
-  // Hide on instructor/admin routes (they have their own layout)
-  if (pathname.startsWith("/instructor") || pathname.startsWith("/admin")) {
+  // Hide on corporate/admin routes (they have their own layout)
+  if (pathname.startsWith("/corporate") || pathname.startsWith("/admin")) {
     return null
   }
 
@@ -63,72 +45,55 @@ export function Header() {
           <span className="font-bold text-xl">Learnify</span>
         </Link>
 
-        {/* Main nav */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {mainNav.map((item) => (
+        {/* Nav links */}
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             <Link
-              key={item.href}
-              href={item.href}
+              href="/dashboard"
               className={cn(
                 "transition-colors hover:text-foreground/80",
-                pathname === item.href
-                  ? "text-foreground"
-                  : "text-foreground/60"
+                pathname === "/dashboard" ? "text-foreground" : "text-foreground/60"
               )}
             >
-              {item.label}
+              Dashboard
             </Link>
-          ))}
-        </nav>
+            <Link
+              href="/my-courses"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                pathname.startsWith("/my-courses") ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              My Courses
+            </Link>
+            <Link
+              href="/certificates"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                pathname === "/certificates" ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Certificates
+            </Link>
+          </nav>
+        )}
 
-        {/* Search */}
-        <form
-          onSubmit={handleSearch}
-          className="hidden md:flex flex-1 items-center px-6"
-        >
-          <div className="relative w-full max-w-lg">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search for courses..."
-              className="w-full pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
+        <div className="flex-1" />
 
         {/* Right side */}
         <div className="flex items-center space-x-2">
           {isAuthenticated ? (
             <>
-              {isInstructor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="hidden sm:flex"
-                >
-                  <Link href="/instructor">Go to Instructor Dashboard</Link>
+              {isCorporateAdmin && (
+                <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+                  <Link href="/corporate">Corporate Dashboard</Link>
                 </Button>
               )}
-              {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="hidden sm:flex"
-                >
+              {isSuperAdmin && (
+                <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
                   <Link href="/admin">Admin</Link>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/favourites">
-                  <Heart className="h-5 w-5" />
-                  <span className="sr-only">Favourites</span>
-                </Link>
-              </Button>
-              <CartDropdown />
               <UserMenu user={user} />
             </>
           ) : (

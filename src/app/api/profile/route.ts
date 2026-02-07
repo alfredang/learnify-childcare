@@ -17,12 +17,14 @@ export async function GET() {
         name: true,
         email: true,
         image: true,
-        headline: true,
         bio: true,
-        website: true,
-        twitter: true,
-        linkedin: true,
-        youtube: true,
+        role: true,
+        jobTitle: true,
+        staffId: true,
+        organizationId: true,
+        organization: {
+          select: { id: true, name: true },
+        },
       },
     })
 
@@ -61,22 +63,14 @@ export async function PUT(request: Request) {
       where: { id: session.user.id },
       data: {
         name: result.data.name,
-        headline: result.data.headline || null,
         bio: result.data.bio || null,
-        website: result.data.website || null,
-        twitter: result.data.twitter || null,
-        linkedin: result.data.linkedin || null,
-        youtube: result.data.youtube || null,
+        jobTitle: result.data.jobTitle || null,
       },
       select: {
         id: true,
         name: true,
-        headline: true,
         bio: true,
-        website: true,
-        twitter: true,
-        linkedin: true,
-        youtube: true,
+        jobTitle: true,
       },
     })
 

@@ -7,9 +7,7 @@ export const COURSE_LEVELS = [
 
 export const COURSE_STATUSES = [
   { value: "DRAFT", label: "Draft" },
-  { value: "PENDING_REVIEW", label: "Pending Review" },
   { value: "PUBLISHED", label: "Published" },
-  { value: "REJECTED", label: "Rejected" },
   { value: "ARCHIVED", label: "Archived" },
 ] as const
 
@@ -20,78 +18,30 @@ export const LECTURE_TYPES = [
 ] as const
 
 export const CATEGORIES = [
-  { name: "Development", slug: "development", icon: "Code" },
-  { name: "Business", slug: "business", icon: "Briefcase" },
-  { name: "Design", slug: "design", icon: "Palette" },
-  { name: "Marketing", slug: "marketing", icon: "Megaphone" },
-  { name: "IT & Software", slug: "it-software", icon: "Server" },
-  { name: "Personal Development", slug: "personal-development", icon: "User" },
-  { name: "Photography", slug: "photography", icon: "Camera" },
-  { name: "Music", slug: "music", icon: "Music" },
-  { name: "Health & Fitness", slug: "health-fitness", icon: "Heart" },
-  { name: "Finance", slug: "finance", icon: "DollarSign" },
+  { name: "Child Development", slug: "child-development", icon: "Baby" },
+  { name: "Health & Safety", slug: "health-safety", icon: "ShieldCheck" },
+  { name: "Nutrition & Wellness", slug: "nutrition-wellness", icon: "Apple" },
+  { name: "Curriculum Planning", slug: "curriculum-planning", icon: "BookOpen" },
+  { name: "Special Needs", slug: "special-needs", icon: "Heart" },
+  { name: "Parent Communication", slug: "parent-communication", icon: "MessageSquare" },
+  { name: "Regulatory Compliance", slug: "regulatory-compliance", icon: "ClipboardCheck" },
 ] as const
 
-export const SORT_OPTIONS = [
-  { value: "popular", label: "Most Popular" },
-  { value: "rating", label: "Highest Rated" },
-  { value: "newest", label: "Newest" },
-  { value: "price-low", label: "Price: Low to High" },
-  { value: "price-high", label: "Price: High to Low" },
+export const ASSIGNMENT_STATUSES = [
+  { value: "ASSIGNED", label: "Assigned" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "OVERDUE", label: "Overdue" },
 ] as const
 
-export const PRICE_FILTERS = [
-  { value: "all", label: "All Prices" },
-  { value: "free", label: "Free" },
-  { value: "paid", label: "Paid" },
-  { value: "under-20", label: "Under $20" },
-  { value: "20-50", label: "$20 - $50" },
-  { value: "50-100", label: "$50 - $100" },
-  { value: "over-100", label: "Over $100" },
-] as const
-
-export const RATING_FILTERS = [
-  { value: "all", label: "All Ratings" },
-  { value: "4.5", label: "4.5 & up" },
-  { value: "4.0", label: "4.0 & up" },
-  { value: "3.5", label: "3.5 & up" },
-  { value: "3.0", label: "3.0 & up" },
-] as const
-
-export const APPLICATION_STATUSES = [
-  { value: "PENDING", label: "Pending" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
-] as const
-
-export const LANGUAGES = [
-  "English",
-  "Spanish",
-  "French",
-  "German",
-  "Portuguese",
-  "Japanese",
-  "Korean",
-  "Chinese",
-  "Arabic",
-  "Hindi",
-  "Italian",
-  "Dutch",
-  "Russian",
-  "Turkish",
-  "Polish",
-  "Vietnamese",
-  "Thai",
-  "Indonesian",
-  "Swedish",
-] as const
+export const LANGUAGES = ["English"] as const
 
 export const SUBTITLE_MAX_LENGTH = 120
 export const LEARNING_OUTCOME_MAX_LENGTH = 160
 
-export const PLATFORM_FEE_PERCENT = 30
-export const MIN_COURSE_PRICE = 0
-export const MAX_COURSE_PRICE = 99999
+export const FIXED_PRICE_SGD = 60
+export const DEFAULT_DEADLINE_MONTHS = 6
+export const DEFAULT_BILLING_ENABLED = false
 
 export const ITEMS_PER_PAGE = 12
 

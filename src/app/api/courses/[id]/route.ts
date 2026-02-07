@@ -22,21 +22,15 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { id },
       include: {
-        instructor: {
-          select: { id: true, name: true, image: true, headline: true },
-        },
+        createdBy: { select: { id: true, name: true } },
         category: true,
         sections: {
           orderBy: { position: "asc" },
           include: {
-            lectures: {
-              orderBy: { position: "asc" },
-            },
+            lectures: { orderBy: { position: "asc" } },
           },
         },
-        _count: {
-          select: { enrollments: true, reviews: true },
-        },
+        _count: { select: { enrollments: true, assignments: true } },
       },
     })
 
@@ -47,13 +41,10 @@ export async function GET(
       )
     }
 
-    // Only the course owner or admin can fetch via this endpoint
-    if (
-      course.instructorId !== session.user.id &&
-      session.user.role !== "ADMIN"
-    ) {
+    // Only super admin can access course management
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
+        { error: "Forbidden", code: "ROLE_FORBIDDEN" },
         { status: 403 }
       )
     }
@@ -83,16 +74,16 @@ export async function PUT(
       )
     }
 
-    if (session.user.role !== "INSTRUCTOR" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "Only instructors can update courses", code: "ROLE_FORBIDDEN" },
+        { error: "Only admins can update courses", code: "ROLE_FORBIDDEN" },
         { status: 403 }
       )
     }
 
     const existingCourse = await prisma.course.findUnique({
       where: { id },
-      select: { instructorId: true, slug: true },
+      select: { slug: true },
     })
 
     if (!existingCourse) {
@@ -102,35 +93,18 @@ export async function PUT(
       )
     }
 
-    if (
-      existingCourse.instructorId !== session.user.id &&
-      session.user.role !== "ADMIN"
-    ) {
-      return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
-        { status: 403 }
-      )
-    }
-
     const body = await request.json()
-
-    // Use partial validation — all fields optional for updates
     const validatedData = courseSchema.partial().safeParse(body)
 
     if (!validatedData.success) {
       return NextResponse.json(
-        {
-          error: "Validation failed",
-          code: "VALIDATION_ERROR",
-          issues: validatedData.error.issues,
-        },
+        { error: "Validation failed", code: "VALIDATION_ERROR", issues: validatedData.error.issues },
         { status: 400 }
       )
     }
 
     const data = validatedData.data
 
-    // Regenerate slug only if title changed
     let slug: string | undefined
     if (data.title) {
       slug = slugify(data.title, { lower: true, strict: true })
@@ -156,29 +130,20 @@ export async function PUT(
         ...(data.categoryId && { categoryId: data.categoryId }),
         ...(data.level && { level: data.level }),
         ...(data.language && { language: data.language }),
-        ...(data.price !== undefined && {
-          price: data.price,
-          isFree: data.price === 0,
-        }),
-        ...(data.learningOutcomes && {
-          learningOutcomes: data.learningOutcomes,
-        }),
-        ...(data.requirements && { requirements: data.requirements }),
-        ...(data.targetAudience && { targetAudience: data.targetAudience }),
-        // These fields are outside the Zod schema but valid on the model
+        ...(data.cpdPoints !== undefined && { cpdPoints: data.cpdPoints }),
+        ...(data.estimatedHours !== undefined && { estimatedHours: data.estimatedHours }),
+        ...(data.learningOutcomes && { learningOutcomes: data.learningOutcomes }),
         ...(body.thumbnail !== undefined && { thumbnail: body.thumbnail }),
-        ...(body.previewVideoUrl !== undefined && {
-          previewVideoUrl: body.previewVideoUrl,
+        ...(body.status && {
+          status: body.status,
+          ...(body.status === "PUBLISHED" && { publishedAt: new Date() }),
         }),
-        ...(body.status && { status: body.status }),
       },
       include: {
         category: true,
         sections: {
           orderBy: { position: "asc" },
-          include: {
-            lectures: { orderBy: { position: "asc" } },
-          },
+          include: { lectures: { orderBy: { position: "asc" } } },
         },
       },
     })
@@ -208,19 +173,16 @@ export async function DELETE(
       )
     }
 
-    if (session.user.role !== "INSTRUCTOR" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "Only instructors can delete courses", code: "ROLE_FORBIDDEN" },
+        { error: "Only admins can delete courses", code: "ROLE_FORBIDDEN" },
         { status: 403 }
       )
     }
 
     const course = await prisma.course.findUnique({
       where: { id },
-      select: {
-        instructorId: true,
-        _count: { select: { enrollments: true } },
-      },
+      select: { _count: { select: { enrollments: true } } },
     })
 
     if (!course) {
@@ -230,23 +192,9 @@ export async function DELETE(
       )
     }
 
-    if (
-      course.instructorId !== session.user.id &&
-      session.user.role !== "ADMIN"
-    ) {
-      return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
-        { status: 403 }
-      )
-    }
-
     if (course._count.enrollments > 0) {
       return NextResponse.json(
-        {
-          error:
-            "Cannot delete a course with enrolled students. Archive it instead.",
-          code: "HAS_ENROLLMENTS",
-        },
+        { error: "Cannot delete a course with enrollments. Archive it instead.", code: "HAS_ENROLLMENTS" },
         { status: 400 }
       )
     }

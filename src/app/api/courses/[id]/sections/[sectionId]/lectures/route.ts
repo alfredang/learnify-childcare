@@ -18,29 +18,22 @@ export async function POST(
       )
     }
 
-    if (session.user.role !== "INSTRUCTOR" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "Only instructors can add lectures", code: "ROLE_FORBIDDEN" },
+        { error: "Only admins can add lectures", code: "ROLE_FORBIDDEN" },
         { status: 403 }
       )
     }
 
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { instructorId: true },
+      select: { id: true },
     })
 
     if (!course) {
       return NextResponse.json(
         { error: "Course not found", code: "COURSE_NOT_FOUND" },
         { status: 404 }
-      )
-    }
-
-    if (course.instructorId !== session.user.id && session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
-        { status: 403 }
       )
     }
 
@@ -82,7 +75,6 @@ export async function POST(
         videoUrl: validated.data.videoUrl || null,
         videoDuration: validated.data.videoDuration || null,
         videoPublicId: validated.data.videoPublicId || null,
-        isFreePreview: validated.data.isFreePreview,
         sectionId,
         position: (lastLecture?.position ?? -1) + 1,
       },

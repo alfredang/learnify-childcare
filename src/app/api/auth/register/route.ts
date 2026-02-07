@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     }
 
     const { name, email, password } = validatedData.data
-    const role = body.role === "INSTRUCTOR" ? "INSTRUCTOR" : "STUDENT"
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -37,7 +36,7 @@ export async function POST(request: Request) {
         name,
         email,
         password: hashedPassword,
-        role,
+        role: "LEARNER",
       },
       select: {
         id: true,

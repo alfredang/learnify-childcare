@@ -12,17 +12,19 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Learnify - Online Learning Platform",
+    default: "Learnify - Childcare Professional Development",
     template: "%s | Learnify",
   },
   description:
-    "The leading online learning platform. Learn new skills, advance your career, and explore new hobbies with expert-led courses.",
+    "Professional development e-learning platform for early childhood educators. SCORM-compliant CPD courses for childcare professionals in Singapore.",
   keywords: [
-    "online courses",
+    "childcare",
+    "early childhood",
+    "CPD",
+    "professional development",
     "e-learning",
-    "education",
-    "tutorials",
-    "skills",
+    "ECDA",
+    "Singapore",
   ],
 }
 

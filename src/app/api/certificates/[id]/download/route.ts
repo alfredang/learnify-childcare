@@ -236,26 +236,27 @@ export async function GET(
     <div class="header">
       <div class="logo">Learnify</div>
       <div class="title">Certificate of Completion</div>
-      <div class="subtitle">Professional Development</div>
+      <div class="subtitle">Continuing Professional Development</div>
     </div>
 
     <div class="content">
       <div class="presented">This is to certify that</div>
-      <div class="recipient">${certificate.user.name || "Student"}</div>
+      <div class="recipient">${certificate.user.name || "Learner"}</div>
       <div class="completion">has successfully completed the course</div>
       <div class="course-name">${certificate.courseName}</div>
+      ${certificate.cpdPoints > 0 ? `<div style="font-size:16px;color:#2d3748;font-weight:600;margin-bottom:20px">${certificate.cpdPoints} CPD Points Earned</div>` : ""}
     </div>
 
     <div class="footer">
       <div class="signature">
         <div class="signature-line"></div>
-        <div class="signature-name">${certificate.instructorName}</div>
-        <div class="signature-title">Course Instructor</div>
+        <div class="signature-name">${certificate.organizationName || "Learnify"}</div>
+        <div class="signature-title">Organization</div>
       </div>
 
       <div class="date-info">
         <div class="date-label">Date of Completion</div>
-        <div class="date-value">${new Date(certificate.issuedAt).toLocaleDateString('en-US', {
+        <div class="date-value">${new Date(certificate.issuedAt).toLocaleDateString('en-SG', {
           year: 'numeric',
           month: 'long',
           day: 'numeric'
@@ -265,7 +266,7 @@ export async function GET(
       <div class="signature">
         <div class="signature-line"></div>
         <div class="signature-name">Learnify</div>
-        <div class="signature-title">Online Learning Platform</div>
+        <div class="signature-title">E-Learning Platform</div>
       </div>
     </div>
 

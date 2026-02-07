@@ -18,7 +18,7 @@ export async function POST(
 
     const { lectureId } = await params
     const body = await request.json()
-    const { isCompleted, watchedDuration, lastPosition } = body
+    const { isCompleted, watchedDuration, lastPosition, scormSessionTime, scormLessonLocation, scormSuspendData } = body
 
     // Verify lecture exists and user is enrolled in the course
     const lecture = await prisma.lecture.findUnique({
@@ -31,7 +31,7 @@ export async function POST(
                 enrollments: {
                   where: { userId: session.user.id },
                 },
-                instructor: {
+                createdBy: {
                   select: { name: true },
                 },
                 sections: {
@@ -63,7 +63,13 @@ export async function POST(
       )
     }
 
-    // Upsert lecture progress
+    // Determine SCORM lesson status
+    let scormLessonStatus: string | undefined
+    if (isCompleted !== undefined) {
+      scormLessonStatus = isCompleted ? "completed" : "incomplete"
+    }
+
+    // Upsert lecture progress with SCORM fields
     const progress = await prisma.lectureProgress.upsert({
       where: {
         userId_lectureId: {
@@ -78,6 +84,10 @@ export async function POST(
         }),
         ...(watchedDuration !== undefined && { watchedDuration }),
         ...(lastPosition !== undefined && { lastPosition }),
+        ...(scormLessonStatus !== undefined && { scormLessonStatus }),
+        ...(scormSessionTime !== undefined && { scormSessionTime }),
+        ...(scormLessonLocation !== undefined && { scormLessonLocation }),
+        ...(scormSuspendData !== undefined && { scormSuspendData }),
       },
       create: {
         userId: session.user.id,
@@ -86,6 +96,7 @@ export async function POST(
         watchedDuration: watchedDuration ?? 0,
         lastPosition: lastPosition ?? 0,
         completedAt: isCompleted ? new Date() : null,
+        scormLessonStatus: scormLessonStatus ?? "not attempted",
       },
     })
 
@@ -114,11 +125,19 @@ export async function POST(
 
     const justCompleted = newProgress === 100 && !enrollment.completedAt
 
+    // Update enrollment with SCORM status
+    const scormStatus = newProgress === 0
+      ? "not attempted"
+      : newProgress === 100
+        ? "completed"
+        : "incomplete"
+
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
         progress: newProgress,
         lastAccessedAt: new Date(),
+        scormStatus,
         ...(justCompleted ? { completedAt: new Date() } : {}),
       },
     })
@@ -130,13 +149,20 @@ export async function POST(
         where: { userId: session.user.id, courseId: course.id },
       })
       if (!existingCert) {
+        // Get organization name for certificate
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          include: { organization: { select: { name: true } } },
+        })
+
         await prisma.certificate.create({
           data: {
             certificateId: `CERT-${nanoid(10).toUpperCase()}`,
             userId: session.user.id,
             courseId: course.id,
             courseName: course.title,
-            instructorName: course.instructor.name || "Instructor",
+            organizationName: user?.organization?.name || "Learnify",
+            cpdPoints: course.cpdPoints,
           },
         })
         certificateGenerated = true

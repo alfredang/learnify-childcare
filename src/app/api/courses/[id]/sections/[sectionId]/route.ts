@@ -3,16 +3,17 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { sectionSchema } from "@/lib/validations/course"
 
-async function verifyCourseOwner(courseId: string, userId: string, role: string) {
+async function verifyCourseAccess(courseId: string, role: string) {
+  if (role !== "SUPER_ADMIN") {
+    return { error: "Only admins can manage sections", code: "ROLE_FORBIDDEN", status: 403 }
+  }
+
   const course = await prisma.course.findUnique({
     where: { id: courseId },
-    select: { instructorId: true },
+    select: { id: true },
   })
 
   if (!course) return { error: "Course not found", code: "COURSE_NOT_FOUND", status: 404 }
-  if (course.instructorId !== userId && role !== "ADMIN") {
-    return { error: "You do not own this course", code: "NOT_COURSE_OWNER", status: 403 }
-  }
   return null
 }
 
@@ -31,7 +32,7 @@ export async function PUT(
       )
     }
 
-    const ownerCheck = await verifyCourseOwner(courseId, session.user.id, session.user.role)
+    const ownerCheck = await verifyCourseAccess(courseId, session.user.role)
     if (ownerCheck) {
       return NextResponse.json(
         { error: ownerCheck.error, code: ownerCheck.code },
@@ -91,7 +92,7 @@ export async function DELETE(
       )
     }
 
-    const ownerCheck = await verifyCourseOwner(courseId, session.user.id, session.user.role)
+    const ownerCheck = await verifyCourseAccess(courseId, session.user.role)
     if (ownerCheck) {
       return NextResponse.json(
         { error: ownerCheck.error, code: ownerCheck.code },

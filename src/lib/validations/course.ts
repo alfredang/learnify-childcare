@@ -23,11 +23,9 @@ export const courseSchema = z.object({
   categoryId: z.string().min(1, "Please select a category"),
   level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "ALL_LEVELS"]),
   language: z.string().default("English"),
-  price: z.coerce.number().min(0, "Price must be 0 or greater"),
-  isFree: z.boolean().default(false),
+  cpdPoints: z.coerce.number().min(0, "CPD points must be 0 or greater").default(0),
+  estimatedHours: z.coerce.number().min(0, "Estimated hours must be 0 or greater").default(2),
   learningOutcomes: z.array(z.string()).optional(),
-  requirements: z.array(z.string()).optional(),
-  targetAudience: z.array(z.string()).optional(),
 })
 
 export const sectionSchema = z.object({
@@ -49,12 +47,6 @@ export const lectureSchema = z.object({
   videoUrl: z.string().nullish(),
   videoPublicId: z.string().nullish(),
   videoDuration: z.coerce.number().nullish(),
-  isFreePreview: z.boolean().default(false),
-})
-
-export const reviewSchema = z.object({
-  rating: z.number().min(1).max(5),
-  comment: z.string().max(1000, "Review must be less than 1000 characters").optional(),
 })
 
 export const quizOptionSchema = z.object({
@@ -119,5 +111,4 @@ export const quizDataSchema = z.object({
 export type CourseInput = z.infer<typeof courseSchema>
 export type SectionInput = z.infer<typeof sectionSchema>
 export type LectureInput = z.infer<typeof lectureSchema>
-export type ReviewInput = z.infer<typeof reviewSchema>
 export type QuizDataInput = z.infer<typeof quizDataSchema>

@@ -7,49 +7,31 @@ import slugify from "slugify"
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const slug = searchParams.get("slug")
-
-    // Fetch single course by slug
-    if (slug) {
-      const course = await prisma.course.findUnique({
-        where: { slug, status: "PUBLISHED" },
-        include: {
-          instructor: {
-            select: { id: true, name: true, image: true, headline: true },
-          },
-          category: true,
-        },
-      })
-
-      if (!course) {
-        return NextResponse.json(
-          { message: "Course not found" },
-          { status: 404 }
-        )
-      }
-
-      return NextResponse.json({ course })
-    }
-
-    // Fetch multiple courses with pagination
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "12")
     const skip = (page - 1) * limit
+    const category = searchParams.get("category")
+    const status = searchParams.get("status") || "PUBLISHED"
 
-    const courses = await prisma.course.findMany({
-      where: { status: "PUBLISHED" },
-      include: {
-        instructor: {
-          select: { id: true, name: true, image: true, headline: true },
+    const where: Record<string, unknown> = { status }
+    if (category) {
+      where.category = { slug: category }
+    }
+
+    const [courses, total] = await Promise.all([
+      prisma.course.findMany({
+        where,
+        include: {
+          createdBy: { select: { id: true, name: true } },
+          category: true,
+          _count: { select: { enrollments: true, assignments: true } },
         },
-        category: true,
-      },
-      orderBy: { totalStudents: "desc" },
-      skip,
-      take: limit,
-    })
-
-    const total = await prisma.course.count({ where: { status: "PUBLISHED" } })
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.course.count({ where }),
+    ])
 
     return NextResponse.json({
       courses,
@@ -77,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    if (session.user.role !== "INSTRUCTOR" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -93,7 +75,6 @@ export async function POST(request: Request) {
 
     const { title, categoryId } = validatedData.data
 
-    // Generate unique slug
     let slug = slugify(title, { lower: true, strict: true })
     const existingSlug = await prisma.course.findUnique({ where: { slug } })
     if (existingSlug) {
@@ -105,11 +86,12 @@ export async function POST(request: Request) {
         title,
         slug,
         categoryId,
-        instructorId: session.user.id,
+        createdById: session.user.id,
         level: "ALL_LEVELS",
         language: "English",
-        price: 0,
-        isFree: true,
+        priceSgd: 60,
+        cpdPoints: 0,
+        estimatedHours: 2,
       },
     })
 

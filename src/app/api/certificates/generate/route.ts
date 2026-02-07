@@ -29,7 +29,6 @@ export async function POST(request: Request) {
       include: {
         course: {
           include: {
-            instructor: { select: { name: true } },
             sections: {
               include: { lectures: true },
             },
@@ -71,14 +70,21 @@ export async function POST(request: Request) {
       return NextResponse.redirect(new URL("/certificates", request.url))
     }
 
+    // Get organization name for certificate
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { organization: { select: { name: true } } },
+    })
+
     // Generate certificate
-    const certificate = await prisma.certificate.create({
+    await prisma.certificate.create({
       data: {
         certificateId: `CERT-${nanoid(10).toUpperCase()}`,
         userId: session.user.id,
         courseId,
         courseName: enrollment.course.title,
-        instructorName: enrollment.course.instructor.name || "Instructor",
+        organizationName: user?.organization?.name || "Learnify",
+        cpdPoints: enrollment.course.cpdPoints,
       },
     })
 

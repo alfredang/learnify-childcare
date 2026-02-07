@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
@@ -80,7 +79,6 @@ interface Lecture {
   videoDuration: number | null
   videoPublicId: string | null
   content: string | null
-  isFreePreview: boolean
 }
 
 interface CourseContentEditorProps {
@@ -201,7 +199,6 @@ export function CourseContentEditor({
   const [lectureTitle, setLectureTitle] = useState("")
   const [lectureDesc, setLectureDesc] = useState("")
   const [lectureType, setLectureType] = useState<"VIDEO" | "TEXT" | "QUIZ">("VIDEO")
-  const [lectureIsFree, setLectureIsFree] = useState(false)
   const [lectureContent, setLectureContent] = useState("")
   const [lectureLoading, setLectureLoading] = useState(false)
   const [isVideoUploading, setIsVideoUploading] = useState(false)
@@ -426,7 +423,6 @@ export function CourseContentEditor({
     setLectureTitle("")
     setLectureDesc("")
     setLectureType("VIDEO")
-    setLectureIsFree(false)
     setLectureContent("")
     setVideoData(null)
     setIsVideoUploading(false)
@@ -437,7 +433,6 @@ export function CourseContentEditor({
     setLectureTitle(lecture.title)
     setLectureDesc(lecture.description || "")
     setLectureType(lecture.type)
-    setLectureIsFree(lecture.isFreePreview)
     setLectureContent(lecture.content || "")
     setIsVideoUploading(false)
     setVideoData(
@@ -478,7 +473,6 @@ export function CourseContentEditor({
             title: lectureTitle.trim(),
             description: lectureDesc.trim() || undefined,
             type: lectureType,
-            isFreePreview: lectureIsFree,
             ...(lectureType === "VIDEO"
               ? {
                   videoUrl: videoData?.videoUrl || "",
@@ -534,7 +528,6 @@ export function CourseContentEditor({
             title: lectureTitle.trim(),
             description: lectureDesc.trim() || null,
             type: lectureType,
-            isFreePreview: lectureIsFree,
             ...(lectureType === "VIDEO"
               ? {
                   videoUrl: videoData?.videoUrl || "",
@@ -724,14 +717,6 @@ export function CourseContentEditor({
                                               <span className="text-sm">
                                                 {lecture.title}
                                               </span>
-                                              {lecture.isFreePreview && (
-                                                <Badge
-                                                  variant="secondary"
-                                                  className="ml-2 text-xs bg-green-100 text-green-800"
-                                                >
-                                                  Free Preview
-                                                </Badge>
-                                              )}
                                             </div>
                                             {lecture.type === "VIDEO" &&
                                               lecture.videoDuration && (
@@ -975,19 +960,7 @@ export function CourseContentEditor({
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Video</Label>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="free-preview-add"
-                        checked={lectureIsFree}
-                        onCheckedChange={setLectureIsFree}
-                      />
-                      <Label htmlFor="free-preview-add" className="text-sm">
-                        Free Preview
-                      </Label>
-                    </div>
-                  </div>
+                  <Label>Video</Label>
                   <VideoUpload
                     onUploadComplete={(data) => {
                       setVideoData(data)
@@ -1079,19 +1052,7 @@ export function CourseContentEditor({
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Video</Label>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="free-preview-edit"
-                        checked={lectureIsFree}
-                        onCheckedChange={setLectureIsFree}
-                      />
-                      <Label htmlFor="free-preview-edit" className="text-sm">
-                        Free Preview
-                      </Label>
-                    </div>
-                  </div>
+                  <Label>Video</Label>
                   <VideoUpload
                     onUploadComplete={(data) => {
                       setVideoData(data)

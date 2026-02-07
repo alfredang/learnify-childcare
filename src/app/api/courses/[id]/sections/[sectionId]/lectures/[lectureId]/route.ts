@@ -19,22 +19,22 @@ export async function PUT(
       )
     }
 
+    if (session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Only admins can update lectures", code: "ROLE_FORBIDDEN" },
+        { status: 403 }
+      )
+    }
+
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { instructorId: true },
+      select: { id: true },
     })
 
     if (!course) {
       return NextResponse.json(
         { error: "Course not found", code: "COURSE_NOT_FOUND" },
         { status: 404 }
-      )
-    }
-
-    if (course.instructorId !== session.user.id && session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
-        { status: 403 }
       )
     }
 
@@ -90,9 +90,6 @@ export async function PUT(
         ...(validated.data.videoPublicId !== undefined && {
           videoPublicId: validated.data.videoPublicId || null,
         }),
-        ...(validated.data.isFreePreview !== undefined && {
-          isFreePreview: validated.data.isFreePreview,
-        }),
       },
     })
 
@@ -121,22 +118,22 @@ export async function DELETE(
       )
     }
 
+    if (session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Only admins can delete lectures", code: "ROLE_FORBIDDEN" },
+        { status: 403 }
+      )
+    }
+
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { instructorId: true },
+      select: { id: true },
     })
 
     if (!course) {
       return NextResponse.json(
         { error: "Course not found", code: "COURSE_NOT_FOUND" },
         { status: 404 }
-      )
-    }
-
-    if (course.instructorId !== session.user.id && session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "You do not own this course", code: "NOT_COURSE_OWNER" },
-        { status: 403 }
       )
     }
 

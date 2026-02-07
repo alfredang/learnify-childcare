@@ -1,78 +1,125 @@
 import type { Metadata } from "next"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, BookOpen, DollarSign, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Building2,
+  BookOpen,
+  Users,
+  ClipboardList,
+  Plus,
+} from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
-  description: "Platform administration",
+  title: "Admin Dashboard - Learnify",
+  description: "Super admin platform overview",
 }
 
-async function getStats() {
+async function getDashboardStats() {
   try {
     const [
-      totalUsers,
-      totalInstructors,
-      totalStudents,
+      totalOrganizations,
       totalCourses,
-      publishedCourses,
-      pendingCourses,
-      totalRevenue,
-      recentUsers,
+      totalLearners,
+      totalAssignments,
+      recentOrganizations,
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { role: "INSTRUCTOR" } }),
-      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.organization.count(),
       prisma.course.count(),
-      prisma.course.count({ where: { status: "PUBLISHED" } }),
-      prisma.course.count({ where: { status: "PENDING_REVIEW" } }),
-      prisma.purchase.aggregate({
-        where: { status: "COMPLETED" },
-        _sum: { amount: true },
-      }),
-      prisma.user.findMany({
+      prisma.user.count({ where: { role: "LEARNER" } }),
+      prisma.courseAssignment.count(),
+      prisma.organization.findMany({
         orderBy: { createdAt: "desc" },
         take: 5,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          createdAt: true,
+        include: {
+          _count: {
+            select: {
+              users: true,
+              assignments: true,
+            },
+          },
         },
       }),
     ])
 
     return {
-      totalUsers,
-      totalInstructors,
-      totalStudents,
+      totalOrganizations,
       totalCourses,
-      publishedCourses,
-      pendingCourses,
-      totalRevenue: totalRevenue._sum.amount || 0,
-      recentUsers,
+      totalLearners,
+      totalAssignments,
+      recentOrganizations,
     }
   } catch (error) {
-    console.error("Failed to fetch admin stats:", error)
+    console.error("Failed to fetch dashboard stats:", error)
     return {
-      totalUsers: 0,
-      totalInstructors: 0,
-      totalStudents: 0,
+      totalOrganizations: 0,
       totalCourses: 0,
-      publishedCourses: 0,
-      pendingCourses: 0,
-      totalRevenue: 0,
-      recentUsers: [] as { id: string; name: string | null; email: string; role: string; createdAt: Date }[],
+      totalLearners: 0,
+      totalAssignments: 0,
+      recentOrganizations: [] as Awaited<
+        ReturnType<typeof prisma.organization.findMany<{
+          include: { _count: { select: { users: true; assignments: true } } }
+        }>>
+      >,
     }
   }
 }
 
 export default async function AdminDashboardPage() {
-  const stats = await getStats()
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect("/login?callbackUrl=/admin")
+  }
+
+  if (session.user.role !== "SUPER_ADMIN") {
+    redirect("/")
+  }
+
+  const stats = await getDashboardStats()
+
+  const statCards = [
+    {
+      title: "Total Organizations",
+      value: stats.totalOrganizations,
+      icon: Building2,
+      description: "Registered childcare centers",
+    },
+    {
+      title: "Total Courses",
+      value: stats.totalCourses,
+      icon: BookOpen,
+      description: "Available training courses",
+    },
+    {
+      title: "Total Learners",
+      value: stats.totalLearners,
+      icon: Users,
+      description: "Active learners on platform",
+    },
+    {
+      title: "Total Assignments",
+      value: stats.totalAssignments,
+      icon: ClipboardList,
+      description: "Course assignments issued",
+    },
+  ]
 
   return (
     <div className="p-6 space-y-8">
+      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
@@ -80,87 +127,115 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalInstructors} instructors, {stats.totalStudents}{" "}
-              students
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCourses}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.publishedCourses} published, {stats.pendingCourses} pending
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${(stats.totalRevenue / 100).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Platform earnings: ${((stats.totalRevenue * 0.3) / 100).toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Approvals
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingCourses}</div>
-            <p className="text-xs text-muted-foreground">
-              Courses awaiting review
-            </p>
-          </CardContent>
-        </Card>
+        {statCards.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">
+                {stat.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Recent Users */}
+      {/* Recent Organizations */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Users</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Recent Organizations</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/organizations">View All</Link>
+          </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {stats.recentUsers.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">{user.name || "No name"}</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">{user.role}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {user.createdAt.toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
+          {stats.recentOrganizations.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              No organizations yet
+            </p>
+          ) : (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>License Number</TableHead>
+                    <TableHead>Learners</TableHead>
+                    <TableHead>Assignments</TableHead>
+                    <TableHead>Billing</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats.recentOrganizations.map((org) => (
+                    <TableRow key={org.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{org.name}</p>
+                          {org.contactEmail && (
+                            <p className="text-xs text-muted-foreground">
+                              {org.contactEmail}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {org.licenseNumber || "N/A"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{org._count.users}</TableCell>
+                      <TableCell>{org._count.assignments}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            org.billingEnabled
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }
+                        >
+                          {org.billingEnabled ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {org.createdAt.toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href="/admin/courses/new">
+                <Plus className="h-4 w-4" />
+                Create Course
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/admin/organizations/new">
+                <Plus className="h-4 w-4" />
+                Create Organization
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

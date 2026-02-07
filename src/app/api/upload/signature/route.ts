@@ -13,9 +13,9 @@ export async function GET() {
       )
     }
 
-    if (session.user.role !== "INSTRUCTOR" && session.user.role !== "ADMIN") {
+    if (session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "Only instructors can upload files", code: "ROLE_FORBIDDEN" },
+        { error: "Only admins can upload files", code: "ROLE_FORBIDDEN" },
         { status: 403 }
       )
     }
