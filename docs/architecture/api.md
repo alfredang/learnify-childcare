@@ -1,21 +1,78 @@
 # API Reference
 
-Learnify provides RESTful API endpoints for all operations.
+Learnify Childcare provides RESTful API endpoints for all operations. All API routes are located under `src/app/api/`.
 
 ## Authentication
 
-All protected endpoints require authentication via NextAuth.js session.
+All protected endpoints require authentication via NextAuth.js v5 session. Role-based access control is enforced at the API level.
 
-### Session Check
+### Session Check Pattern
 
 ```typescript
 import { auth } from "@/lib/auth";
 
 const session = await auth();
-if (!session) {
-  return Response.json({ error: "Unauthorized" }, { status: 401 });
+if (!session?.user) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+if (session.user.role !== "CORPORATE_ADMIN" && session.user.role !== "SUPER_ADMIN") {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 ```
+
+### Roles
+
+| Role | Description |
+|------|-------------|
+| `LEARNER` | Childcare workers who complete assigned training |
+| `CORPORATE_ADMIN` | Centre managers who assign courses and monitor progress |
+| `SUPER_ADMIN` | Platform administrators with full access |
+
+---
+
+## Auth API
+
+### NextAuth Handler
+
+```http
+ALL /api/auth/[...nextauth]
+```
+
+Handles all NextAuth.js operations (sign in, sign out, session, callbacks).
+
+### Register User
+
+```http
+POST /api/auth/register
+```
+
+**Auth:** None
+
+**Request Body:**
+
+```json
+{
+  "email": "learner@example.sg",
+  "password": "securepassword",
+  "name": "Sarah Tan",
+  "role": "LEARNER"
+}
+```
+
+**Response (201):**
+
+```json
+{
+  "user": {
+    "id": "clx...",
+    "email": "learner@example.sg",
+    "name": "Sarah Tan",
+    "role": "LEARNER"
+  }
+}
+```
+
+---
 
 ## Courses API
 
@@ -25,15 +82,18 @@ if (!session) {
 GET /api/courses
 ```
 
+**Auth:** None (returns only PUBLISHED courses for unauthenticated users). Super Admins can see all statuses.
+
 **Query Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `category` | string | Filter by category slug |
-| `level` | string | Filter by level |
-| `search` | string | Search term |
-| `page` | number | Page number |
-| `limit` | number | Items per page |
+| `level` | string | Filter by level (BEGINNER, INTERMEDIATE, ADVANCED, ALL_LEVELS) |
+| `search` | string | Search term (matches title and description) |
+| `status` | string | Filter by status (SUPER_ADMIN only) |
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Items per page (default: 12) |
 
 **Response:**
 
@@ -42,18 +102,27 @@ GET /api/courses
   "courses": [
     {
       "id": "clx...",
-      "title": "Web Development Bootcamp",
-      "slug": "web-development-bootcamp",
-      "price": 49.99,
-      "instructor": {
+      "title": "CPR and First Aid for Childcare Workers",
+      "slug": "cpr-first-aid-childcare",
+      "priceSgd": 60.00,
+      "cpdPoints": 8,
+      "estimatedHours": 4.0,
+      "level": "ALL_LEVELS",
+      "status": "PUBLISHED",
+      "category": {
         "id": "...",
-        "name": "John Doe"
+        "name": "Health & Safety",
+        "slug": "health-safety"
+      },
+      "createdBy": {
+        "id": "...",
+        "name": "Admin"
       }
     }
   ],
-  "total": 100,
+  "total": 15,
   "page": 1,
-  "totalPages": 10
+  "totalPages": 2
 }
 ```
 
@@ -63,23 +132,41 @@ GET /api/courses
 GET /api/courses/:id
 ```
 
+**Auth:** None (PUBLISHED courses only) or authenticated user
+
 **Response:**
 
 ```json
 {
   "id": "clx...",
-  "title": "Web Development Bootcamp",
-  "description": "...",
-  "price": 49.99,
-  "level": "BEGINNER",
+  "title": "CPR and First Aid for Childcare Workers",
+  "slug": "cpr-first-aid-childcare",
+  "subtitle": "Essential emergency response skills",
+  "description": "<p>Learn life-saving CPR techniques...</p>",
+  "priceSgd": 60.00,
+  "cpdPoints": 8,
+  "estimatedHours": 4.0,
+  "scormVersion": "2.0",
+  "level": "ALL_LEVELS",
+  "language": "English",
+  "learningOutcomes": [
+    "Perform infant and child CPR",
+    "Manage common childhood emergencies"
+  ],
   "status": "PUBLISHED",
-  "instructor": { ... },
-  "category": { ... },
+  "category": { "id": "...", "name": "Health & Safety" },
   "sections": [
     {
       "id": "...",
-      "title": "Introduction",
-      "lectures": [ ... ]
+      "title": "Module 1: Introduction to First Aid",
+      "lectures": [
+        {
+          "id": "...",
+          "title": "What is First Aid?",
+          "type": "VIDEO",
+          "videoDuration": 600
+        }
+      ]
     }
   ]
 }
@@ -91,16 +178,18 @@ GET /api/courses/:id
 POST /api/courses
 ```
 
-**Requires:** Instructor or Admin role
+**Auth:** SUPER_ADMIN
 
-**Request Body (minimal — used by the 3-step creation wizard):**
+**Request Body:**
 
 ```json
 {
-  "title": "My Course",
-  "categoryId": "..."
+  "title": "Nutrition Planning for Toddlers",
+  "categoryId": "clx..."
 }
 ```
+
+Creates a DRAFT course with default values (priceSgd: 60, scormVersion: "2.0") and returns the course ID for further editing.
 
 ### Update Course
 
@@ -108,7 +197,9 @@ POST /api/courses
 PUT /api/courses/:id
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN (or course creator)
+
+**Request Body:** Any subset of course fields (title, subtitle, description, categoryId, level, language, priceSgd, cpdPoints, estimatedHours, learningOutcomes, status, thumbnail, scormVersion).
 
 ### Delete Course
 
@@ -116,64 +207,11 @@ PUT /api/courses/:id
 DELETE /api/courses/:id
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN
 
-## Categories API
+Courses with active enrollments or assignments cannot be deleted.
 
-### List Categories
-
-```http
-GET /api/categories
-```
-
-**Response:**
-
-```json
-{
-  "categories": [
-    {
-      "id": "...",
-      "name": "Web Development",
-      "slug": "web-development",
-      "_count": { "courses": 25 }
-    }
-  ]
-}
-```
-
-## Checkout API
-
-### Create Checkout Session
-
-```http
-POST /api/checkout
-```
-
-**Request Body:**
-
-```json
-{
-  "courseId": "clx..."
-}
-```
-
-**Response:**
-
-```json
-{
-  "url": "https://checkout.stripe.com/..."
-}
-```
-
-### Verify Checkout Session
-
-```http
-POST /api/checkout/verify
-```
-
-**Requires:** Authenticated user
-
-Verifies a Stripe checkout session after redirect. Creates enrollments and clears cart items on success.
+---
 
 ## Sections API
 
@@ -183,14 +221,14 @@ Verifies a Stripe checkout session after redirect. Creates enrollments and clear
 POST /api/courses/:id/sections
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN
 
 **Request Body:**
 
 ```json
 {
-  "title": "Getting Started",
-  "description": "Introduction to the course"
+  "title": "Module 1: Introduction",
+  "description": "Overview of the course content"
 }
 ```
 
@@ -200,7 +238,7 @@ POST /api/courses/:id/sections
 PUT /api/courses/:id/sections/reorder
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN
 
 **Request Body:**
 
@@ -217,7 +255,9 @@ PUT    /api/courses/:id/sections/:sectionId
 DELETE /api/courses/:id/sections/:sectionId
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN
+
+---
 
 ## Lectures API
 
@@ -227,17 +267,16 @@ DELETE /api/courses/:id/sections/:sectionId
 POST /api/courses/:id/sections/:sectionId/lectures
 ```
 
-**Requires:** Course owner or Admin
+**Auth:** SUPER_ADMIN
 
 **Request Body:**
 
 ```json
 {
-  "title": "Introduction Video",
+  "title": "Introduction to CPR Techniques",
   "type": "VIDEO",
   "videoUrl": "https://res.cloudinary.com/...",
-  "videoDuration": 360,
-  "isFreePreview": true
+  "videoDuration": 600
 }
 ```
 
@@ -249,12 +288,26 @@ Lecture types: `VIDEO`, `TEXT`, `QUIZ`
 PUT /api/courses/:id/sections/:sectionId/lectures/reorder
 ```
 
+**Auth:** SUPER_ADMIN
+
+**Request Body:**
+
+```json
+{
+  "orderedIds": ["lecture1-id", "lecture2-id", "lecture3-id"]
+}
+```
+
 ### Update / Delete Lecture
 
 ```http
 PUT    /api/courses/:id/sections/:sectionId/lectures/:lectureId
 DELETE /api/courses/:id/sections/:sectionId/lectures/:lectureId
 ```
+
+**Auth:** SUPER_ADMIN
+
+---
 
 ## Progress API
 
@@ -264,143 +317,273 @@ DELETE /api/courses/:id/sections/:sectionId/lectures/:lectureId
 POST /api/lectures/:lectureId/progress
 ```
 
-**Requires:** Authenticated user
+**Auth:** Authenticated user (LEARNER)
 
 **Request Body:**
 
 ```json
 {
   "videoPosition": 120,
-  "completed": true
+  "completed": true,
+  "scormLessonStatus": "completed",
+  "scormSessionTime": "PT0H15M30S",
+  "scormLessonLocation": "page-5"
 }
 ```
 
-Recalculates overall enrollment progress percentage.
+Updates the LectureProgress record for the current user. Also recalculates the overall enrollment progress percentage and updates SCORM fields.
 
-## Upload API
-
-### Get Cloudinary Signature
-
-```http
-POST /api/upload/signature
-```
-
-**Requires:** Authenticated user
-
-Returns a signed upload URL for client-side Cloudinary uploads.
-
-## Favourites API
-
-### Add / Remove from Favourites
-
-```http
-POST   /api/favourites   # Add course to favourites
-DELETE /api/favourites   # Remove course from favourites
-```
-
-**Requires:** Authenticated user
-
-**Request Body:**
+**Response:**
 
 ```json
 {
-  "courseId": "clx..."
+  "progress": {
+    "id": "...",
+    "isCompleted": true,
+    "watchedDuration": 600,
+    "lastPosition": 120,
+    "scormLessonStatus": "completed"
+  },
+  "enrollmentProgress": 75
 }
 ```
 
-> **Note:** The legacy `/api/wishlist` endpoint still exists but `/api/favourites` is the active endpoint.
-
-## Cart API
-
-### Cart Management
-
-```http
-GET    /api/cart   # List cart items
-POST   /api/cart   # Add course to cart
-DELETE /api/cart   # Remove course from cart
-```
-
-**Requires:** Authenticated user
-
-**Request Body (POST/DELETE):**
-
-```json
-{
-  "courseId": "clx..."
-}
-```
-
-**Response (GET):**
-
-```json
-{
-  "items": [
-    {
-      "id": "...",
-      "course": {
-        "id": "...",
-        "title": "Web Development Bootcamp",
-        "price": 49.99,
-        "instructor": { ... }
-      }
-    }
-  ]
-}
-```
-
-## Reviews API
-
-### List Course Reviews
-
-```http
-GET /api/courses/:id/reviews
-```
-
-**Query Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `page` | number | Page number |
-| `limit` | number | Items per page |
-
-### Create Review
-
-```http
-POST /api/courses/:id/reviews
-```
-
-**Requires:** Authenticated user with enrollment
-
-**Request Body:**
-
-```json
-{
-  "rating": 5,
-  "comment": "Great course!"
-}
-```
-
-### Update / Delete Review
-
-```http
-PUT    /api/courses/:id/reviews/:reviewId
-DELETE /api/courses/:id/reviews/:reviewId
-```
-
-**Requires:** Review owner
+---
 
 ## Enrollments API
 
 ### List / Create Enrollments
 
 ```http
-GET  /api/enrollments   # List user's enrollments
-POST /api/enrollments   # Create enrollment (free courses)
+GET  /api/enrollments
+POST /api/enrollments
 ```
 
-**Requires:** Authenticated user
+**Auth:** Authenticated user
 
-**Request Body (POST):**
+**GET** returns the current user's enrollments with progress and SCORM data.
+
+**POST Request Body:**
+
+```json
+{
+  "courseId": "clx...",
+  "userId": "clx..."
+}
+```
+
+Enrollments are typically created automatically when a course is assigned, but can also be created directly by Super Admins.
+
+**GET Response:**
+
+```json
+{
+  "enrollments": [
+    {
+      "id": "...",
+      "progress": 45,
+      "scormStatus": "incomplete",
+      "scormScore": null,
+      "scormTotalTime": "PT1H30M",
+      "deadline": "2026-03-15T00:00:00.000Z",
+      "course": {
+        "id": "...",
+        "title": "CPR and First Aid",
+        "cpdPoints": 8,
+        "category": { "name": "Health & Safety" }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Assignments API
+
+### List / Create Course Assignments
+
+```http
+GET  /api/assignments
+POST /api/assignments
+```
+
+**Auth:** CORPORATE_ADMIN or SUPER_ADMIN
+
+**GET** returns assignments scoped to the corporate admin's organisation.
+
+**POST Request Body:**
+
+```json
+{
+  "learnerId": "clx...",
+  "courseId": "clx...",
+  "deadline": "2026-03-15T00:00:00.000Z",
+  "notes": "Please complete before next month's audit"
+}
+```
+
+**Response (201):**
+
+```json
+{
+  "assignment": {
+    "id": "clx...",
+    "learnerId": "clx...",
+    "courseId": "clx...",
+    "assignedById": "clx...",
+    "organizationId": "clx...",
+    "status": "ASSIGNED",
+    "deadline": "2026-03-15T00:00:00.000Z",
+    "notes": "Please complete before next month's audit"
+  }
+}
+```
+
+If the organisation has billing enabled, the response includes a Stripe checkout URL:
+
+```json
+{
+  "assignment": { ... },
+  "checkoutUrl": "https://checkout.stripe.com/..."
+}
+```
+
+**Assignment Constraints:**
+
+- Each learner can only be assigned a course once (`@@unique([learnerId, courseId])`)
+- Only PUBLISHED courses can be assigned
+- Learner must belong to the corporate admin's organisation
+- The `organizationId` is automatically set from the corporate admin's organisation
+
+---
+
+## Organizations API
+
+### List Organizations
+
+```http
+GET /api/organizations
+```
+
+**Auth:** SUPER_ADMIN
+
+**Response:**
+
+```json
+{
+  "organizations": [
+    {
+      "id": "clx...",
+      "name": "Sunshine Childcare Centre",
+      "slug": "sunshine-childcare",
+      "contactName": "Mary Lim",
+      "contactEmail": "manager@sunshine.sg",
+      "licenseNumber": "LIC-2024-001",
+      "maxLearners": 50,
+      "billingEnabled": false,
+      "_count": {
+        "users": 12,
+        "assignments": 45
+      }
+    }
+  ]
+}
+```
+
+### Get Organization
+
+```http
+GET /api/organizations/:id
+```
+
+**Auth:** SUPER_ADMIN or CORPORATE_ADMIN (own organisation only)
+
+### Update Organization
+
+```http
+PUT /api/organizations/:id
+```
+
+**Auth:** SUPER_ADMIN
+
+**Request Body:** Any subset of organisation fields (name, contactName, contactEmail, phone, address, licenseNumber, maxLearners, billingEnabled).
+
+### List Organization Learners
+
+```http
+GET /api/organizations/:id/learners
+```
+
+**Auth:** CORPORATE_ADMIN (own organisation) or SUPER_ADMIN
+
+Returns all users with role LEARNER belonging to the specified organisation.
+
+**Response:**
+
+```json
+{
+  "learners": [
+    {
+      "id": "clx...",
+      "name": "Sarah Tan",
+      "email": "sarah@sunshine.sg",
+      "jobTitle": "Lead Teacher",
+      "staffId": "SS-001",
+      "assignments": [
+        {
+          "courseId": "...",
+          "status": "IN_PROGRESS",
+          "progress": 60,
+          "deadline": "2026-03-15T00:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Categories API
+
+### List Categories
+
+```http
+GET /api/categories
+```
+
+**Auth:** None
+
+**Response:**
+
+```json
+{
+  "categories": [
+    {
+      "id": "...",
+      "name": "Health & Safety",
+      "slug": "health-safety",
+      "description": "CPR, first aid, workplace safety, infection control",
+      "_count": { "courses": 5 }
+    }
+  ]
+}
+```
+
+---
+
+## Certificates API
+
+### Generate Certificate
+
+```http
+POST /api/certificates/generate
+```
+
+**Auth:** Authenticated user with 100% course completion
+
+**Request Body:**
 
 ```json
 {
@@ -408,33 +591,35 @@ POST /api/enrollments   # Create enrollment (free courses)
 }
 ```
 
-## Become Instructor API
-
-### Promote Student to Instructor
-
-```http
-POST /api/become-instructor
-```
-
-**Requires:** Authenticated student
-
-Promotes the logged-in student to the INSTRUCTOR role and updates the JWT cookie so the middleware sees the new role immediately.
+Generates a certificate with a unique ID, the learner's organisation name, and the course's CPD points.
 
 **Response:**
 
 ```json
 {
-  "success": true
+  "certificate": {
+    "id": "...",
+    "certificateId": "CERT-2026-ABC123",
+    "courseName": "CPR and First Aid for Childcare Workers",
+    "organizationName": "Sunshine Childcare Centre",
+    "cpdPoints": 8,
+    "issuedAt": "2026-02-07T10:00:00.000Z",
+    "expiresAt": "2028-02-07T10:00:00.000Z"
+  }
 }
 ```
 
-**Error Codes:**
+### Download Certificate
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `UNAUTHORIZED` | 401 | Not logged in |
-| `ROLE_FORBIDDEN` | 403 | User is not a student |
-| `PROMOTION_FAILED` | 500 | Database error |
+```http
+GET /api/certificates/:id/download
+```
+
+**Auth:** Certificate owner
+
+Returns the certificate as a downloadable file.
+
+---
 
 ## Profile API
 
@@ -445,18 +630,15 @@ GET /api/profile
 PUT /api/profile
 ```
 
-**Requires:** Authenticated user
+**Auth:** Authenticated user
 
 **Request Body (PUT):**
 
 ```json
 {
-  "name": "John Doe",
-  "headline": "Full-Stack Developer",
-  "bio": "10 years of experience...",
-  "website": "https://example.com",
-  "twitter": "@johndoe",
-  "linkedin": "johndoe"
+  "name": "Sarah Tan",
+  "jobTitle": "Senior Teacher",
+  "bio": "10 years of experience in early childhood education"
 }
 ```
 
@@ -466,108 +648,25 @@ PUT /api/profile
 POST /api/profile/image
 ```
 
-**Requires:** Authenticated user
+**Auth:** Authenticated user
 
 Uploads a profile image to Cloudinary and updates the user record.
 
-## Instructor Applications API (Legacy)
+---
 
-> **Note:** The primary path to becoming an instructor is now via `POST /api/become-instructor` (auto-promote) or direct signup with `role: "INSTRUCTOR"` at registration. The application workflow below is retained for backward compatibility.
+## Upload API
 
-### Student Endpoints
-
-```http
-GET  /api/instructor-applications   # Get current user's application status
-POST /api/instructor-applications   # Submit application
-```
-
-**Request Body (POST):**
-
-```json
-{
-  "headline": "Full-Stack Developer",
-  "bio": "10 years of experience..."
-}
-```
-
-### Admin Endpoints
+### Get Cloudinary Signature
 
 ```http
-GET   /api/admin/instructor-applications       # List all applications
-PATCH /api/admin/instructor-applications/:id   # Approve or reject
+POST /api/upload/signature
 ```
 
-**Request Body (PATCH):**
+**Auth:** Authenticated user
 
-```json
-{
-  "status": "APPROVED",
-  "adminNote": "Welcome aboard!"
-}
-```
+Returns a signed upload URL for client-side Cloudinary uploads. Used for video and image uploads in the course editor.
 
-## Certificates API
-
-### Generate Certificate
-
-```http
-POST /api/certificates/generate
-```
-
-**Requires:** Authenticated user with 100% course completion
-
-### Download Certificate
-
-```http
-GET /api/certificates/:id/download
-```
-
-## Invoices API
-
-### Get Invoice
-
-```http
-GET /api/invoices/:id
-```
-
-**Requires:** Authenticated user (own invoice)
-
-## Webhooks
-
-### Stripe Webhook
-
-```http
-POST /api/webhooks/stripe
-```
-
-Handles Stripe events:
-
-- `checkout.session.completed` - Creates enrollment after successful payment
-- `payment_intent.succeeded` - Updates purchase status
-
-## Server Actions
-
-In addition to REST APIs, Learnify uses Server Actions for mutations:
-
-```typescript
-// Enroll in a free course
-"use server"
-export async function enrollInCourse(courseId: string) {
-  // ... implementation
-}
-
-// Update course progress
-"use server"
-export async function updateProgress(lectureId: string) {
-  // ... implementation
-}
-
-// Submit review
-"use server"
-export async function submitReview(courseId: string, rating: number, comment: string) {
-  // ... implementation
-}
-```
+---
 
 ## Error Handling
 
@@ -580,14 +679,57 @@ All endpoints return consistent error responses:
 }
 ```
 
-**Common Status Codes:**
+### Common Status Codes
 
 | Code | Description |
 |------|-------------|
 | 200 | Success |
 | 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
+| 400 | Bad Request (validation error) |
+| 401 | Unauthorized (not authenticated) |
+| 403 | Forbidden (insufficient role) |
 | 404 | Not Found |
+| 409 | Conflict (e.g., duplicate assignment) |
 | 500 | Internal Server Error |
+
+### Common Error Codes
+
+| Code | Description |
+|------|-------------|
+| `UNAUTHORIZED` | User is not authenticated |
+| `FORBIDDEN` | User does not have the required role |
+| `NOT_FOUND` | Resource does not exist |
+| `DUPLICATE_ASSIGNMENT` | Learner is already assigned to this course |
+| `COURSE_NOT_PUBLISHED` | Cannot assign a course that is not PUBLISHED |
+| `ORG_LEARNER_LIMIT` | Organisation has reached its maximum learner count |
+| `VALIDATION_ERROR` | Request body failed Zod validation |
+
+## API Route Summary
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/auth/[...nextauth]` | ALL | -- | NextAuth handler |
+| `/api/auth/register` | POST | None | User registration |
+| `/api/categories` | GET | None | List course categories |
+| `/api/courses` | GET | None | List/search courses |
+| `/api/courses` | POST | SUPER_ADMIN | Create course |
+| `/api/courses/[id]` | GET | None | Get course details |
+| `/api/courses/[id]` | PUT | SUPER_ADMIN | Update course |
+| `/api/courses/[id]` | DELETE | SUPER_ADMIN | Delete course |
+| `/api/courses/[id]/sections` | POST | SUPER_ADMIN | Create section |
+| `/api/courses/[id]/sections/reorder` | PUT | SUPER_ADMIN | Reorder sections |
+| `/api/courses/[id]/sections/[sId]` | PUT/DELETE | SUPER_ADMIN | Update/delete section |
+| `/api/courses/[id]/sections/[sId]/lectures` | POST | SUPER_ADMIN | Create lecture |
+| `/api/courses/[id]/sections/[sId]/lectures/reorder` | PUT | SUPER_ADMIN | Reorder lectures |
+| `/api/courses/[id]/sections/[sId]/lectures/[lId]` | PUT/DELETE | SUPER_ADMIN | Update/delete lecture |
+| `/api/lectures/[id]/progress` | POST | Authenticated | Update lecture progress |
+| `/api/enrollments` | GET/POST | Authenticated | Enrollment management |
+| `/api/assignments` | GET/POST | CORPORATE_ADMIN+ | Course assignment management |
+| `/api/organizations` | GET | SUPER_ADMIN | List organisations |
+| `/api/organizations/[id]` | GET/PUT | SUPER_ADMIN / CORPORATE_ADMIN | Get/update organisation |
+| `/api/organizations/[id]/learners` | GET | CORPORATE_ADMIN+ | List organisation learners |
+| `/api/certificates/generate` | POST | Authenticated | Generate certificate |
+| `/api/certificates/[id]/download` | GET | Certificate owner | Download certificate |
+| `/api/profile` | GET/PUT | Authenticated | Profile management |
+| `/api/profile/image` | POST | Authenticated | Upload profile image |
+| `/api/upload/signature` | POST | Authenticated | Cloudinary upload signature |

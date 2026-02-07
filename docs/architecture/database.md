@@ -1,30 +1,24 @@
 # Database Schema
 
-Learnify uses PostgreSQL with Prisma ORM.
+Learnify Childcare uses PostgreSQL with Prisma ORM. The database is hosted on Neon in production.
 
 ## Entity Relationship Diagram
 
 ```mermaid
 erDiagram
-    User ||--o{ Course : creates
+    Organization ||--o{ User : has
+    Organization ||--o{ CourseAssignment : tracks
     User ||--o{ Enrollment : has
     User ||--o{ LectureProgress : tracks
-    User ||--o{ Review : writes
-    User ||--o{ Purchase : makes
-    User ||--o{ Earning : receives
-    User ||--o{ Wishlist : saves
-    User ||--o{ CartItem : carts
     User ||--o{ Certificate : earns
-    User ||--o{ InstructorApplication : submits
+    User ||--o{ CourseAssignment : receives
+    User ||--o{ CourseAssignment : assigns
+    User ||--o{ Course : creates
     Course ||--o{ Section : contains
     Section ||--o{ Lecture : contains
-    Lecture ||--o{ Resource : has
     Lecture ||--o{ LectureProgress : tracked_by
     Course ||--o{ Enrollment : has
-    Course ||--o{ Review : receives
-    Course ||--o{ Purchase : has
-    Course ||--o{ Wishlist : saved_in
-    Course ||--o{ CartItem : added_to
+    Course ||--o{ CourseAssignment : assigned_via
     Course }o--|| Category : belongs_to
 ```
 
@@ -32,9 +26,9 @@ erDiagram
 
 ```prisma
 enum UserRole {
-  STUDENT
-  INSTRUCTOR
-  ADMIN
+  LEARNER
+  CORPORATE_ADMIN
+  SUPER_ADMIN
 }
 
 enum CourseLevel {
@@ -46,9 +40,7 @@ enum CourseLevel {
 
 enum CourseStatus {
   DRAFT
-  PENDING_REVIEW
   PUBLISHED
-  REJECTED
   ARCHIVED
 }
 
@@ -58,24 +50,11 @@ enum LectureType {
   QUIZ
 }
 
-enum PurchaseStatus {
-  PENDING
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
   COMPLETED
-  REFUNDED
-  FAILED
-}
-
-enum PayoutStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum ApplicationStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  OVERDUE
 }
 ```
 
@@ -83,7 +62,7 @@ enum ApplicationStatus {
 
 ### User
 
-The central user model with role-based access and Stripe integration.
+The central user model representing learners, corporate admins, and super admins. Users belong to an organisation (except super admins).
 
 ```prisma
 model User {
@@ -94,35 +73,89 @@ model User {
   name          String?
   image         String?
   bio           String?   @db.Text
-  headline      String?
-  role          UserRole  @default(STUDENT)
+  role          UserRole  @default(LEARNER)
 
-  website  String?
-  twitter  String?
-  linkedin String?
-  youtube  String?
+  jobTitle String?
+  staffId  String?
 
-  stripeCustomerId       String? @unique
-  stripeConnectAccountId String? @unique
-  stripeConnectOnboarded Boolean @default(false)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
-  // Relations
-  courses      Course[]
-  earnings     Earning[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Auth relations
+  accounts Account[]
+  sessions Session[]
+
+  // Learning relations
   enrollments  Enrollment[]
   progress     LectureProgress[]
-  reviews      Review[]
-  wishlist     Wishlist[]
-  cartItems    CartItem[]
-  purchases    Purchase[]
   certificates Certificate[]
-  instructorApplications InstructorApplication[]
+
+  // Course creation (SUPER_ADMIN)
+  createdCourses Course[]
+
+  // Assignments
+  assignments  CourseAssignment[]              // Courses assigned to this learner
+  assignedByMe CourseAssignment[] @relation("AssignedBy")  // Courses this admin assigned
+
+  @@index([email])
+  @@index([role])
+  @@index([organizationId])
 }
 ```
 
+**Key fields:**
+
+| Field | Description |
+|-------|-------------|
+| `role` | LEARNER, CORPORATE_ADMIN, or SUPER_ADMIN |
+| `organizationId` | Which childcare centre the user belongs to (null for SUPER_ADMIN) |
+| `jobTitle` | Role at the childcare centre (e.g., "Lead Teacher") |
+| `staffId` | Organisation-issued staff identifier |
+
+### Organization
+
+Represents a childcare centre. Contains billing configuration and learner limits.
+
+```prisma
+model Organization {
+  id             String  @id @default(cuid())
+  name           String
+  slug           String  @unique
+  contactName    String?
+  contactEmail   String?
+  phone          String?
+  address        String? @db.Text
+  licenseNumber  String?
+  maxLearners    Int     @default(50)
+  billingEnabled Boolean @default(false)
+  stripeCustomerId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  assignments CourseAssignment[]
+
+  @@index([slug])
+}
+```
+
+**Key fields:**
+
+| Field | Description |
+|-------|-------------|
+| `slug` | URL-safe unique identifier |
+| `licenseNumber` | ECDA or government-issued childcare licence |
+| `maxLearners` | Cap on learner accounts (default: 50) |
+| `billingEnabled` | Whether Stripe billing is required for course assignments |
+| `stripeCustomerId` | Linked Stripe customer for billing |
+
 ### Course
 
-Courses created by instructors. Uses `Decimal` for price fields.
+Training courses created by Super Admins. Uses SGD pricing and includes CPD points and SCORM metadata.
 
 ```prisma
 model Course {
@@ -132,50 +165,58 @@ model Course {
   subtitle    String?
   description String? @db.Text
 
-  thumbnail       String?
-  previewVideoUrl String?
+  thumbnail String?
 
-  price         Decimal  @default(0) @db.Decimal(10, 2)
-  discountPrice Decimal? @db.Decimal(10, 2)
-  isFree        Boolean  @default(false)
+  priceSgd       Decimal @default(60) @db.Decimal(10, 2)
+  cpdPoints      Int     @default(0)
+  estimatedHours Decimal @default(2) @db.Decimal(4, 1)
+  scormVersion   String  @default("2.0")
 
   level    CourseLevel @default(ALL_LEVELS)
   language String      @default("English")
 
   learningOutcomes String[]
-  requirements     String[]
-  targetAudience   String[]
 
-  status          CourseStatus @default(DRAFT)
-  publishedAt     DateTime?
-  rejectionReason String?
+  status      CourseStatus @default(DRAFT)
+  publishedAt DateTime?
 
-  totalDuration Int     @default(0)
-  totalLectures Int     @default(0)
-  totalStudents Int     @default(0)
-  averageRating Decimal @default(0) @db.Decimal(2, 1)
-  totalReviews  Int     @default(0)
+  totalDuration Int @default(0)
+  totalLectures Int @default(0)
 
-  isFeatured    Boolean @default(false)
-  featuredOrder Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // Relations
-  instructor   User     @relation(fields: [instructorId])
-  instructorId String
-  category     Category @relation(fields: [categoryId])
-  categoryId   String
-  sections     Section[]
-  enrollments  Enrollment[]
-  reviews      Review[]
-  wishlist     Wishlist[]
-  cartItems    CartItem[]
-  purchases    Purchase[]
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  sections    Section[]
+  enrollments Enrollment[]
+  assignments CourseAssignment[]
+
+  @@index([slug])
+  @@index([createdById])
+  @@index([categoryId])
+  @@index([status])
 }
 ```
 
+**Key fields:**
+
+| Field | Description |
+|-------|-------------|
+| `priceSgd` | Price in SGD per assignment (default: 60.00) |
+| `cpdPoints` | CPD points awarded on completion |
+| `estimatedHours` | Expected time to complete |
+| `scormVersion` | SCORM compatibility version (default: "2.0") |
+| `status` | DRAFT, PUBLISHED, or ARCHIVED |
+| `learningOutcomes` | Array of learning outcome strings |
+
 ### Category
 
-Course categorization with icon support.
+Course categorisation for early childhood education topics.
 
 ```prisma
 model Category {
@@ -185,13 +226,20 @@ model Category {
   description String?
   icon        String?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   courses Course[]
+
+  @@index([slug])
 }
 ```
 
-### Section & Lecture
+Default categories: Child Development, Health & Safety, Nutrition & Wellness, Curriculum Planning, Special Needs, Parent Communication, Regulatory Compliance.
 
-Course content organization. Lectures support VIDEO, TEXT, and QUIZ types.
+### Section and Lecture
+
+Course content organisation. Sections contain lectures. Both support drag-and-drop reordering via position field.
 
 ```prisma
 model Section {
@@ -200,9 +248,16 @@ model Section {
   description String?
   position    Int
 
-  course   Course    @relation(fields: [courseId])
-  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseId String
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
   lectures Lecture[]
+
+  @@index([courseId])
+  @@index([position])
 }
 
 model Lecture {
@@ -214,53 +269,115 @@ model Lecture {
 
   videoUrl      String?
   videoDuration Int?
-  videoPublicId String?   // Cloudinary public ID for deletion
+  videoPublicId String?   // Cloudinary public ID for video management
 
-  content       String? @db.Text  // Quiz JSON or text content
+  content String? @db.Text  // Quiz JSON or rich text content
 
-  isFreePreview Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  section   Section     @relation(fields: [sectionId])
   sectionId String
-  resources Resource[]
-  progress  LectureProgress[]
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  progress LectureProgress[]
+
+  @@index([sectionId])
+  @@index([position])
 }
 ```
 
-### Resource
+**Lecture types:**
 
-Downloadable files attached to lectures.
+| Type | Description |
+|------|-------------|
+| `VIDEO` | Video content uploaded via Cloudinary |
+| `TEXT` | Rich text content (HTML) |
+| `QUIZ` | Quiz stored as JSON in the `content` field |
+
+### CourseAssignment
+
+Tracks when a corporate admin assigns a course to a learner. This is the central workflow model.
 
 ```prisma
-model Resource {
-  id   String  @id @default(cuid())
-  name String
-  type String
-  url  String
-  size Int?
+model CourseAssignment {
+  id              String           @id @default(cuid())
+  deadline        DateTime?
+  status          AssignmentStatus @default(ASSIGNED)
+  assignedAt      DateTime         @default(now())
+  notes           String?          @db.Text
+  stripeSessionId String?
 
-  lecture   Lecture @relation(fields: [lectureId])
-  lectureId String
+  learnerId String
+  learner   User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignedById String
+  assignedBy   User @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([learnerId, courseId])
+  @@index([learnerId])
+  @@index([courseId])
+  @@index([organizationId])
+  @@index([status])
 }
 ```
 
-### Enrollment & LectureProgress
+**Key fields:**
 
-Student enrollment and per-lecture progress tracking.
+| Field | Description |
+|-------|-------------|
+| `learnerId` | The learner who receives the assignment |
+| `assignedById` | The corporate admin who created the assignment |
+| `organizationId` | The organisation context (auto-set from corporate admin's org) |
+| `deadline` | Optional completion deadline |
+| `status` | ASSIGNED, IN_PROGRESS, COMPLETED, or OVERDUE |
+| `stripeSessionId` | Stripe checkout session ID (when billing is enabled) |
+| `notes` | Optional notes from the corporate admin |
+
+**Unique constraint:** `@@unique([learnerId, courseId])` ensures each learner is assigned a course at most once.
+
+### Enrollment and LectureProgress
+
+Tracks learner progress through courses with SCORM-compatible data fields.
 
 ```prisma
 model Enrollment {
-  id             String    @id @default(cuid())
+  id String @id @default(cuid())
+
   progress       Int       @default(0)    // Percentage 0-100
   completedAt    DateTime?
   lastAccessedAt DateTime?
 
-  user     User   @relation(fields: [userId])
-  userId   String
-  course   Course @relation(fields: [courseId])
-  courseId  String
+  assignedById String?
+  assignedAt   DateTime?
+  deadline     DateTime?
+
+  // SCORM fields
+  scormStatus      String   @default("not attempted")
+  scormScore       Decimal? @db.Decimal(5, 2)
+  scormTotalTime   String?
+  scormSuspendData String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
 }
 
 model LectureProgress {
@@ -268,100 +385,50 @@ model LectureProgress {
   isCompleted     Boolean @default(false)
   watchedDuration Int     @default(0)
   lastPosition    Int     @default(0)    // Video resume position in seconds
-  completedAt     DateTime?
 
-  user      User    @relation(fields: [userId])
+  // SCORM fields
+  scormLessonStatus   String?
+  scormSessionTime    String?
+  scormLessonLocation String?
+  scormSuspendData    String?  @db.Text
+
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   userId    String
-  lecture   Lecture  @relation(fields: [lectureId])
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   lectureId String
+  lecture   Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lectureId])
-}
-```
-
-### Review
-
-Student reviews with instructor response support.
-
-```prisma
-model Review {
-  id      String  @id @default(cuid())
-  rating  Int     // 1-5
-  comment String? @db.Text
-
-  response    String?   @db.Text   // Instructor response
-  respondedAt DateTime?
-
-  isApproved Boolean @default(true)
-  isFeatured Boolean @default(false)
-
-  user     User   @relation(fields: [userId])
-  userId   String
-  course   Course @relation(fields: [courseId])
-  courseId  String
-
-  @@unique([userId, courseId])
-}
-```
-
-### Wishlist (Favourites)
-
-Backs the favourites feature. DB model is named `Wishlist` but the UI uses "favourites" terminology.
-
-```prisma
-model Wishlist {
-  id String @id @default(cuid())
-
-  user     User   @relation(fields: [userId])
-  userId   String
-  course   Course @relation(fields: [courseId])
-  courseId  String
-
-  @@unique([userId, courseId])
-}
-```
-
-### CartItem
-
-Shopping cart for multi-course checkout. Items are cleared after successful purchase.
-
-```prisma
-model CartItem {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  user     User   @relation(fields: [userId])
-  userId   String
-  course   Course @relation(fields: [courseId])
-  courseId  String
-
-  @@unique([userId, courseId])
-}
-```
-
-### InstructorApplication
-
-Students apply to become instructors. Admins review and approve/reject.
-
-```prisma
-model InstructorApplication {
-  id        String            @id @default(cuid())
-  headline  String
-  bio       String            @db.Text
-  status    ApplicationStatus @default(PENDING)
-  adminNote String?           @db.Text
-
-  user         User   @relation(fields: [userId])
-  userId       String
-  reviewedBy   User?  @relation("ReviewedApplications", fields: [reviewedById])
-  reviewedById String?
-
   @@index([userId])
-  @@index([status])
+  @@index([lectureId])
 }
 ```
+
+**SCORM fields at the enrollment level:**
+
+| Field | Description |
+|-------|-------------|
+| `scormStatus` | Overall course status: "not attempted", "incomplete", "completed", "passed", "failed" |
+| `scormScore` | Aggregate score (0-100) |
+| `scormTotalTime` | Cumulative time in ISO 8601 duration format |
+| `scormSuspendData` | Serialised state for course-level resume |
+
+**SCORM fields at the lecture level:**
+
+| Field | Description |
+|-------|-------------|
+| `scormLessonStatus` | Per-lesson status |
+| `scormSessionTime` | Time spent in the current session |
+| `scormLessonLocation` | Bookmark for resuming within a lecture |
+| `scormSuspendData` | Per-lesson serialised state |
 
 ### Certificate
+
+Completion certificates with CPD points and organisation context.
 
 ```prisma
 model Certificate {
@@ -369,66 +436,81 @@ model Certificate {
   certificateId String   @unique
   issuedAt      DateTime @default(now())
 
-  courseName     String
-  instructorName String
+  courseName       String
+  organizationName String?
+  cpdPoints        Int       @default(0)
+  expiresAt        DateTime?
 
-  user    User   @relation(fields: [userId])
   userId  String
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId String
+
+  @@index([userId])
+  @@index([certificateId])
 }
 ```
 
-### Purchase & Earning
+**Key fields:**
 
-Payment records with 70/30 revenue split.
+| Field | Description |
+|-------|-------------|
+| `certificateId` | Unique human-readable identifier for verification (e.g., "CERT-2026-ABC123") |
+| `courseName` | Denormalised course name (preserved even if course is later archived) |
+| `organizationName` | Learner's organisation at time of completion |
+| `cpdPoints` | CPD points awarded (denormalised from course) |
+| `expiresAt` | Optional expiry date for time-limited certifications |
 
-```prisma
-model Purchase {
-  id String @id @default(cuid())
+### Auth Models
 
-  amount            Int   // In cents
-  platformFee       Int   // 30% platform fee
-  instructorEarning Int   // 70% instructor share
-
-  stripePaymentIntentId String? @unique
-  stripeSessionId       String?
-  status                PurchaseStatus @default(PENDING)
-
-  courseName  String
-  coursePrice  Decimal @db.Decimal(10, 2)
-
-  user     User   @relation(fields: [userId])
-  userId   String
-  course   Course @relation(fields: [courseId])
-  courseId  String
-}
-
-model Earning {
-  id     String @id @default(cuid())
-  amount Int
-
-  periodStart DateTime
-  periodEnd   DateTime
-
-  payoutStatus     PayoutStatus @default(PENDING)
-  stripeTransferId String?
-  paidAt           DateTime?
-
-  user   User   @relation(fields: [userId])
-  userId String
-}
-```
-
-### PlatformSettings
-
-Configurable platform-wide settings.
+NextAuth.js v5 adapter models for OAuth and session management.
 
 ```prisma
-model PlatformSettings {
-  id                 String  @id @default(cuid())
-  platformFeePercent Int     @default(30)
-  minCoursePrice     Decimal @default(0) @db.Decimal(10, 2)
-  maxCoursePrice     Decimal @default(999.99) @db.Decimal(10, 2)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }
 ```
 
@@ -438,18 +520,48 @@ model PlatformSettings {
 # Generate Prisma Client
 npx prisma generate
 
-# Push schema to database
+# Push schema to database (no migration history)
 npm run db:push
 
-# Run migrations
+# Run migrations (creates migration history)
 npm run db:migrate
 
-# Seed database
+# Seed database with sample data
 npm run db:seed
 
-# Open Prisma Studio
+# Open Prisma Studio (browser-based DB GUI)
 npm run db:studio
 
-# Reset database
+# Reset database (destructive)
 npx prisma db push --force-reset
 ```
+
+## Indexes
+
+The schema uses strategic indexes for query performance:
+
+| Table | Index | Purpose |
+|-------|-------|---------|
+| User | `email` | Login lookups |
+| User | `role` | Role-based queries |
+| User | `organizationId` | Organisation-scoped queries |
+| Organization | `slug` | URL-based lookups |
+| Course | `slug`, `status`, `categoryId`, `createdById` | Course listing and filtering |
+| Section | `courseId`, `position` | Ordered section retrieval |
+| Lecture | `sectionId`, `position` | Ordered lecture retrieval |
+| Enrollment | `userId`, `courseId` | Progress lookups |
+| LectureProgress | `userId`, `lectureId` | Per-lecture progress lookups |
+| CourseAssignment | `learnerId`, `courseId`, `organizationId`, `status` | Assignment queries and filtering |
+| Certificate | `userId`, `certificateId` | Certificate lookups |
+
+## Unique Constraints
+
+| Constraint | Purpose |
+|------------|---------|
+| `Enrollment(userId, courseId)` | One enrollment per learner per course |
+| `LectureProgress(userId, lectureId)` | One progress record per learner per lecture |
+| `CourseAssignment(learnerId, courseId)` | One assignment per learner per course |
+| `Organization.slug` | Unique organisation slugs for URLs |
+| `Course.slug` | Unique course slugs for URLs |
+| `User.email` | Unique email addresses |
+| `Certificate.certificateId` | Unique certificate IDs for verification |

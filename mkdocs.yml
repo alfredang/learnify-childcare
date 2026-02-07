@@ -1,10 +1,10 @@
-site_name: Learnify Documentation
-site_description: Documentation for Learnify - Modern Online Learning Platform
+site_name: Learnify Childcare Documentation
+site_description: Documentation for Learnify Childcare - Corporate E-Learning Platform for Childcare Professionals
 site_author: Alfred Ang
-site_url: https://alfredang.github.io/Learnify/
+site_url: https://alfredang.github.io/learnify-childcare/
 
-repo_name: alfredang/Learnify
-repo_url: https://github.com/alfredang/Learnify
+repo_name: alfredang/learnify-childcare
+repo_url: https://github.com/alfredang/learnify-childcare
 
 theme:
   name: material
@@ -74,9 +74,9 @@ nav:
     - Quick Start: getting-started/quick-start.md
   - Features:
     - Overview: features/overview.md
-    - For Students: features/students.md
-    - For Instructors: features/instructors.md
-    - For Administrators: features/administrators.md
+    - For Learners: features/students.md
+    - For Corporate Admins: features/instructors.md
+    - For Super Admins: features/administrators.md
   - Architecture:
     - Tech Stack: architecture/tech-stack.md
     - Database Schema: architecture/database.md
@@ -93,4 +93,4 @@ extra:
       link: https://github.com/alfredang
   generator: false
 
-copyright: Copyright &copy; 2024 Alfred Ang
+copyright: Copyright &copy; 2026 Alfred Ang

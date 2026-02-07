@@ -1,90 +1,93 @@
-# Welcome to Learnify
+# Welcome to Learnify Childcare
 
 <div align="center">
-  <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600" alt="Learnify Platform" style="border-radius: 10px; margin: 20px 0;" />
 
-  <p><strong>🚀 Live Demo:</strong> <a href="https://learnify-corporate-training-platform.netlify.app">https://learnify-corporate-training-platform.netlify.app</a></p>
+  **Corporate E-Learning Platform for Early Childhood Educators in Singapore**
+
+  <p><strong>Live Demo:</strong> <a href="https://learnify-corporate-training-platform.netlify.app">https://learnify-corporate-training-platform.netlify.app</a></p>
 
   <p>
-    <a href="https://github.com/alfredang/Learnify"><img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub"></a>
+    <a href="https://github.com/alfredang/learnify-childcare"><img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub"></a>
     <a href="https://learnify-corporate-training-platform.netlify.app"><img src="https://img.shields.io/badge/Netlify-Deployed-00C7B7?logo=netlify" alt="Netlify"></a>
   </p>
 </div>
 
-**Learnify** is a modern, full-featured online learning marketplace where instructors create courses and students learn. Built with cutting-edge technologies for optimal performance and developer experience.
-
-## Live Demo Links
-
-| Page | Description |
-|------|-------------|
-| [🏠 Homepage](https://learnify-corporate-training-platform.netlify.app/) | Landing page with featured courses |
-| [📚 All Courses](https://learnify-corporate-training-platform.netlify.app/courses) | Browse published courses |
-| [📂 Categories](https://learnify-corporate-training-platform.netlify.app/categories) | Browse course categories |
-| [🔍 Search](https://learnify-corporate-training-platform.netlify.app/search) | Search for courses |
-| [ℹ️ About](https://learnify-corporate-training-platform.netlify.app/about) | About the platform |
-| [👨‍🏫 Become Instructor](https://learnify-corporate-training-platform.netlify.app/become-instructor) | Instructor signup |
-| [🔐 Login](https://learnify-corporate-training-platform.netlify.app/login) | User login |
-| [📝 Register](https://learnify-corporate-training-platform.netlify.app/register) | New user signup |
+**Learnify Childcare** is a corporate e-learning platform purpose-built for early childhood education centres in Singapore. It enables childcare organisations to assign, track, and manage professional development courses for their staff, with built-in CPD (Continuing Professional Development) points tracking, SCORM-compatible progress, and optional Stripe billing.
 
 ## Key Features
 
 <div class="grid cards" markdown>
 
--   :material-account-school:{ .lg .middle } **For Students**
+-   :material-account-school:{ .lg .middle } **For Learners**
 
     ---
 
-    Browse courses, track progress, earn certificates, and manage your learning journey.
+    Childcare workers complete assigned courses, track CPD points, and earn certificates.
 
-    - 🔍 Browse & search courses with filters
-    - 📚 Enroll in free or paid courses
-    - 📊 Track learning progress
-    - 🎥 Watch video lectures
-    - ⭐ Leave reviews and ratings
-    - 📜 Earn completion certificates
+    - View assigned courses with deadlines
+    - Track learning progress with SCORM support
+    - Earn CPD points upon completion
+    - Download completion certificates
+    - Resume courses from where you left off
+    - View personal dashboard with upcoming deadlines
 
--   :material-teach:{ .lg .middle } **For Instructors**
-
-    ---
-
-    Create courses, upload videos, set pricing, and monitor student engagement.
-
-    - 📝 Create multimedia courses
-    - 🎬 Upload videos via Cloudinary
-    - 💰 Set flexible pricing
-    - 📈 Analytics dashboard
-    - 💵 Track earnings (70% revenue)
-    - 📊 Monitor engagement
-
--   :material-shield-account:{ .lg .middle } **For Administrators**
+-   :material-domain:{ .lg .middle } **For Corporate Admins**
 
     ---
 
-    Manage users, approve courses, track revenue, and oversee the platform.
+    Centre managers assign courses to staff, monitor progress, and manage their organisation.
 
-    - 👥 User management
-    - ✅ Course approval workflow
-    - 📂 Category management
-    - 💳 Revenue tracking
-    - ⚙️ Platform settings
+    - Assign courses to learners with deadlines
+    - Monitor learner progress across the organisation
+    - Manage learner accounts within the centre
+    - View organisation-level completion reports
+    - Optional Stripe billing per assignment (SGD 60)
+    - Track assignment statuses (Assigned, In Progress, Completed, Overdue)
+
+-   :material-shield-account:{ .lg .middle } **For Super Admins**
+
+    ---
+
+    Platform administrators manage courses, organisations, and users across the system.
+
+    - Create and publish courses with CPD points
+    - Manage organisations (childcare centres)
+    - Manage all users and role assignments
+    - Configure course content (sections, lectures, quizzes)
+    - Platform-wide reporting and oversight
 
 </div>
+
+## Course Categories
+
+All courses are tailored for the early childhood education sector in Singapore:
+
+| Category | Description |
+|----------|-------------|
+| **Child Development** | Understanding developmental milestones and learning stages |
+| **Health & Safety** | CPR, first aid, workplace safety, infection control |
+| **Nutrition & Wellness** | Meal planning, dietary needs, health promotion |
+| **Curriculum Planning** | Lesson planning, activity design, ECDA frameworks |
+| **Special Needs** | Inclusive education, early intervention strategies |
+| **Parent Communication** | Effective communication, parent engagement, reporting |
+| **Regulatory Compliance** | ECDA licensing, child protection, legal requirements |
 
 ## Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| **Next.js 16** | React framework with App Router |
+| **Next.js 16** | React framework with App Router and Server Components |
 | **React 19** | UI library |
-| **TypeScript** | Type-safe JavaScript |
+| **TypeScript** | Type-safe development |
 | **Tailwind CSS 4** | Utility-first CSS |
-| **Prisma** | Type-safe ORM |
+| **Prisma 5** | Type-safe ORM for PostgreSQL |
 | **PostgreSQL (Neon)** | Relational database |
-| **NextAuth.js v5** | Authentication |
-| **Stripe** | Payment processing |
-| **Cloudinary** | Media storage |
-| **shadcn/ui** | UI components |
-| **Recharts** | Charts for analytics |
+| **NextAuth.js v5** | Authentication (Credentials + OAuth) |
+| **Stripe** | Optional payment processing for course assignments |
+| **Cloudinary** | Video and image upload and CDN |
+| **shadcn/ui** | Radix-based UI component library |
+| **React Hook Form + Zod** | Form management and validation |
+| **TanStack React Query** | Server state and data fetching |
 
 ## Application Routes
 
@@ -92,94 +95,66 @@
 
 | Route | Description |
 |-------|-------------|
-| `/` | Homepage with featured courses |
-| `/courses` | Browse all courses |
-| `/courses/[slug]` | Course details page |
-| `/categories` | All categories |
-| `/categories/[slug]` | Category courses |
-| `/search` | Search courses |
-| `/about` | About page |
-| `/become-instructor` | Instructor signup (new users) or auto-promote (existing students) |
-| `/login` | Login page |
-| `/register` | Registration |
+| `/` | Landing page |
+| `/login` | User login |
+| `/register` | New user registration |
+| `/forgot-password` | Password recovery |
 
-### Protected Routes
+### Learner Routes (Authenticated)
 
-| Route | Role | Description |
-|-------|------|-------------|
-| `/my-courses` | Student | Enrolled courses |
-| `/my-courses/[id]` | Student | Course overview |
-| `/my-courses/[id]/lectures/[id]` | Student | Lecture viewer (video, quiz) |
-| `/cart` | Student | Shopping cart |
-| `/favourites` | Student | Saved courses |
-| `/account` | Student | Account settings |
-| `/account/invoices` | Student | Invoice history |
-| `/account/purchases` | Student | Purchase history |
-| `/certificates` | Student | Completion certificates |
-| `/messages` | Student | Messages |
-| `/notifications` | Student | Notifications |
-| `/instructor` | Instructor | Course list (dashboard) |
-| `/instructor/courses/new` | Instructor | Create course (3-step wizard) |
-| `/instructor/courses/[id]` | Instructor | Course editor (sidebar checklist) |
-| `/instructor/performance` | Instructor | Revenue & analytics |
-| `/instructor/tools` | Instructor | Instructor tools |
-| `/instructor/profile` | Instructor | Profile management |
-| `/admin` | Admin | Admin dashboard |
-| `/admin/users` | Admin | User management |
-| `/admin/courses` | Admin | Course management |
-| `/admin/applications` | Admin | Instructor applications |
+| Route | Description |
+|-------|-------------|
+| `/dashboard` | Learner dashboard with assigned courses and deadlines |
+| `/my-courses` | All enrolled/assigned courses |
+| `/my-courses/[courseId]` | Course overview |
+| `/my-courses/[courseId]/lectures/[lectureId]` | Lecture viewer (video, text, quiz) |
+| `/certificates` | Earned completion certificates |
+| `/account` | Account settings |
 
-## API Endpoints
+### Corporate Admin Routes (Authenticated)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/[...nextauth]` | ALL | Authentication |
-| `/api/auth/register` | POST | User registration |
-| `/api/categories` | GET | List categories |
-| `/api/courses` | GET | List courses |
-| `/api/courses` | POST | Create course |
-| `/api/courses/[id]` | GET | Get course details |
-| `/api/courses/[id]` | PUT | Update course |
-| `/api/courses/[id]` | DELETE | Delete course |
-| `/api/courses/[id]/sections` | POST | Create section |
-| `/api/courses/[id]/sections/reorder` | PUT | Reorder sections |
-| `/api/courses/[id]/sections/[sId]` | PUT/DELETE | Update/delete section |
-| `/api/courses/[id]/sections/[sId]/lectures` | POST | Create lecture |
-| `/api/courses/[id]/sections/[sId]/lectures/reorder` | PUT | Reorder lectures |
-| `/api/courses/[id]/sections/[sId]/lectures/[lId]` | PUT/DELETE | Update/delete lecture |
-| `/api/lectures/[id]/progress` | POST | Update lecture progress |
-| `/api/courses/[id]/reviews` | GET/POST | List/create reviews |
-| `/api/courses/[id]/reviews/[rId]` | PUT/DELETE | Update/delete review |
-| `/api/enrollments` | GET/POST | Enrollment management |
-| `/api/cart` | GET/POST/DELETE | Cart management |
-| `/api/favourites` | POST/DELETE | Add/remove favourites |
-| `/api/checkout` | POST | Create Stripe checkout |
-| `/api/checkout/verify` | POST | Verify checkout session |
-| `/api/webhooks/stripe` | POST | Stripe webhooks |
-| `/api/upload/signature` | POST | Cloudinary upload signature |
-| `/api/certificates/generate` | POST | Generate certificate |
-| `/api/certificates/[id]/download` | GET | Download certificate |
-| `/api/invoices/[id]` | GET | Get invoice details |
-| `/api/instructor-applications` | GET/POST | Application status/submit |
-| `/api/admin/instructor-applications` | GET | List applications (admin) |
-| `/api/admin/instructor-applications/[id]` | PATCH | Approve/reject (admin) |
-| `/api/become-instructor` | POST | Promote student to instructor |
-| `/api/profile` | GET/PUT | Get or update user profile |
-| `/api/profile/image` | POST | Upload profile image |
+| Route | Description |
+|-------|-------------|
+| `/corporate` | Organisation dashboard with stats |
+| `/corporate/learners` | Manage learners in the organisation |
+| `/corporate/assign` | Assign courses to learners |
+| `/corporate/progress` | Monitor learner progress |
+
+### Super Admin Routes (Authenticated)
+
+| Route | Description |
+|-------|-------------|
+| `/admin` | Platform dashboard |
+| `/admin/courses` | Course management (create, edit, publish) |
+| `/admin/organizations` | Organisation management |
+| `/admin/users` | User management |
+
+## Test Accounts
+
+After seeding the database, use these accounts to explore the platform:
+
+| Role | Email | Password | Organisation |
+|------|-------|----------|--------------|
+| Super Admin | `admin@learnify.sg` | `password123` | -- |
+| Corporate Admin | `manager@sunshine.sg` | `password123` | Sunshine Childcare |
+| Corporate Admin | `admin@littleexplorers.sg` | `password123` | Little Explorers |
+| Learner | `sarah@sunshine.sg` | `password123` | Sunshine Childcare |
+| Learner | `priya@sunshine.sg` | `password123` | Sunshine Childcare |
+| Learner | `zhang@littleexplorers.sg` | `password123` | Little Explorers |
 
 ## Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/alfredang/Learnify.git
-cd Learnify
+git clone https://github.com/alfredang/learnify-childcare.git
+cd learnify-childcare
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env with your credentials (DATABASE_URL, AUTH_SECRET, etc.)
 
 # Set up database
 npx prisma generate
@@ -200,10 +175,9 @@ DATABASE_URL="postgresql://..."
 AUTH_SECRET="your-secret"
 AUTH_URL="http://localhost:3000"
 
-# Stripe
+# Stripe (optional - only needed for billing-enabled organisations)
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME="..."
@@ -216,59 +190,45 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="..."
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-## Test Accounts
+## Project Structure
 
-After seeding the database, use these accounts:
-
-| Role | Email | Password |
-|------|-------|----------|
-| 👑 Admin | `admin@learnify.com` | `password123` |
-| 👨‍🏫 Instructor | `john@learnify.com` | `password123` |
-| 👨‍🏫 Instructor | `sarah@learnify.com` | `password123` |
-| 👨‍🎓 Student | `student1@example.com` | `password123` |
+```
+learnify-childcare/
+├── prisma/
+│   ├── schema.prisma        # Database schema (all models, enums, relations)
+│   └── seed.ts              # Seed script with sample data
+├── docs/                    # Project documentation
+├── src/
+│   ├── app/                 # Next.js App Router
+│   │   ├── (auth)/          # Auth pages: login, register, forgot-password
+│   │   ├── (learner)/       # Learner pages: dashboard, my-courses, certificates, account
+│   │   ├── (corporate)/     # Corporate admin pages: dashboard, learners, assign, progress
+│   │   ├── (admin)/         # Super admin pages: dashboard, courses, organizations, users
+│   │   └── api/             # REST API endpoints
+│   ├── components/          # React components (auth, courses, layout, shared, ui)
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utilities, auth config, Prisma client, validations
+│   ├── providers/           # Context providers (Auth, Query, Theme)
+│   ├── types/               # TypeScript type definitions
+│   └── middleware.ts        # Route protection and role-based access control
+├── public/                  # Static assets
+└── package.json
+```
 
 ## Database Models
 
 | Model | Description |
 |-------|-------------|
-| **User** | Users with roles (STUDENT, INSTRUCTOR, ADMIN) |
-| **Course** | Courses with title, description, price |
-| **Category** | Course categories |
+| **User** | Users with roles (LEARNER, CORPORATE_ADMIN, SUPER_ADMIN) and organisation membership |
+| **Organization** | Childcare centres with license numbers, billing settings, and learner limits |
+| **Course** | Training courses with CPD points, SCORM version, and SGD pricing |
+| **Category** | Course categories (Child Development, Health & Safety, etc.) |
 | **Section** | Course sections/modules |
 | **Lecture** | Lectures (VIDEO, TEXT, QUIZ types) |
-| **Resource** | Lecture resources/files |
-| **Enrollment** | Student enrollments |
-| **LectureProgress** | Per-lecture progress tracking |
-| **Review** | Course reviews and ratings |
-| **Purchase** | Payment records |
-| **Earning** | Instructor earnings and payouts |
-| **Certificate** | Completion certificates |
-| **Wishlist** | Favourites (saved courses) |
-| **CartItem** | Shopping cart items |
-| **InstructorApplication** | Instructor applications |
-| **PlatformSettings** | Configurable platform fees |
-
-## Project Structure
-
-```
-learnify/
-├── prisma/
-│   ├── schema.prisma    # Database schema
-│   └── seed.ts          # Seed data
-├── docs/                # Documentation
-├── src/
-│   ├── app/             # Next.js App Router
-│   │   ├── (auth)/      # Auth pages
-│   │   ├── (browse)/    # Public pages
-│   │   ├── (student)/   # Student pages
-│   │   ├── (instructor)/ # Instructor pages
-│   │   ├── (admin)/     # Admin pages
-│   │   └── api/         # API routes
-│   ├── components/      # React components
-│   ├── lib/             # Utilities
-│   └── middleware.ts    # Route protection
-└── package.json
-```
+| **CourseAssignment** | Corporate admin assigns courses to learners with deadlines |
+| **Enrollment** | Learner enrollment with SCORM progress tracking |
+| **LectureProgress** | Per-lecture progress with SCORM session data |
+| **Certificate** | Completion certificates with CPD points and expiry dates |
 
 ## Deployment
 
@@ -276,15 +236,15 @@ The application is deployed on **Netlify**:
 
 - **Live URL:** [learnify-corporate-training-platform.netlify.app](https://learnify-corporate-training-platform.netlify.app)
 - **Database:** Neon PostgreSQL
-- **Media:** Cloudinary
-- **Payments:** Stripe
+- **Media:** Cloudinary CDN
+- **Payments:** Stripe (optional per-organisation)
 
 ## Support
 
 - [Live Demo](https://learnify-corporate-training-platform.netlify.app) - Try the platform
-- [GitHub Repository](https://github.com/alfredang/Learnify) - Source code
-- [GitHub Issues](https://github.com/alfredang/Learnify/issues) - Report bugs
+- [GitHub Repository](https://github.com/alfredang/learnify-childcare) - Source code
+- [GitHub Issues](https://github.com/alfredang/learnify-childcare/issues) - Report bugs
 
 ---
 
-Made with :heart: by [Alfred Ang](https://github.com/alfredang)
+Made with care by [Alfred Ang](https://github.com/alfredang)

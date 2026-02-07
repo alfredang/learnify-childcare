@@ -1,122 +1,138 @@
-# Instructor Features
+# Corporate Admin Features
 
-Learnify empowers instructors to create and monetize their courses.
+Corporate Admins in Learnify Childcare are centre managers or training coordinators responsible for managing their organisation's professional development programme. They assign courses to learners, monitor progress, and ensure training compliance.
 
-## Becoming an Instructor
+## Organisation Dashboard (`/corporate`)
 
-There are two paths to become an instructor (matching Udemy):
+The corporate admin dashboard provides an at-a-glance view of the organisation's training status:
 
-1. **New users** — Register directly as an instructor via the signup form on `/become-instructor`
-2. **Existing students** — Click the "Create Your Course" CTA on `/become-instructor`, which calls `POST /api/become-instructor` to auto-promote STUDENT → INSTRUCTOR and refreshes the session
+- **Total learners** registered in the organisation
+- **Active assignments** currently in progress
+- **Completion rate** across all assignments
+- **Overdue assignments** requiring attention
+- **Recent activity** feed showing latest completions and new assignments
 
-The legacy admin-approval flow (InstructorApplication model) is still in the codebase for backward compatibility but is no longer the primary path.
+## Learner Management (`/corporate/learners`)
 
-## Course Creation
+Corporate admins manage all learners within their childcare centre.
 
-### 3-Step Creation Wizard
+### Viewing Learners
 
-New courses are created via a 3-step overlay wizard at `/instructor/courses/new`:
+The learner management page displays:
 
-1. **Title** — Enter your course title
-2. **Category** — Select from available categories
-3. **Time commitment** — Estimate weekly hours
+- List of all learners in the organisation
+- Learner name, email, job title, and staff ID
+- Number of assigned courses per learner
+- Completion statistics per learner
+- Quick links to view individual learner progress
 
-The wizard uses `courseCreateSchema` (title + categoryId only) to create a minimal DRAFT course, then redirects to the full course editor.
+### Organisation Scope
 
-### Course Editor
+Corporate admins can only view and manage learners who belong to their own organisation. This data isolation is enforced at both the API and middleware levels. A corporate admin at Sunshine Childcare cannot see learners at Little Explorers, and vice versa.
 
-The editor at `/instructor/courses/[id]` uses a left sidebar checklist (`EditorSidebar`) with three sections:
+### Learner Limits
 
-**Plan your course**
+Each organisation has a `maxLearners` setting (default: 50) that caps the number of learner accounts. This is configured by the Super Admin at the organisation level.
 
-- **Intended learners** — Define learning outcomes, requirements, and target audience using Udemy-style editable rows (`EditableListField`)
+## Course Assignment (`/corporate/assign`)
 
-**Create your content**
+The core workflow for corporate admins is assigning courses to their learners.
 
-- **Curriculum** — Build sections and lectures with drag-and-drop reordering (dnd-kit). Supports VIDEO, TEXT, and QUIZ lecture types.
+### Assignment Process
 
-**Publish your course**
+1. **Select a course** from the list of published courses
+2. **Select a learner** from the organisation's learner list
+3. **Set a deadline** (optional) for when the course must be completed
+4. **Add notes** (optional) with any instructions or context for the learner
+5. **Confirm the assignment** -- if billing is enabled, a Stripe checkout session is created
 
-- **Course landing page** — Title, subtitle (120 char limit), description (TipTap rich text), category, level, language, thumbnail image, and promotional video
-- **Pricing** — Set course price in USD (free or paid)
+### Assignment Constraints
 
-Each section auto-saves and calls `onSaved` to invalidate the React Query cache. Completion checkmarks are computed from course data (green CheckCircle2 icons).
+- Each learner can only be assigned a given course once (enforced by `@@unique([learnerId, courseId])`)
+- Only PUBLISHED courses can be assigned
+- Only learners within the corporate admin's own organisation can be assigned courses
 
-### Content Types
+### Optional Billing
 
-- **Video lectures** — Uploaded via Cloudinary with automatic transcoding and adaptive streaming
-- **Text content** — Rich formatting with TipTap editor (bold, italic, headings, lists)
-- **Quizzes** — Multiple choice, multiple select, and open-ended questions
-- **Downloadable resources** — Attached to lectures
+Course assignment billing is configured at the organisation level:
 
-### Pricing Options
+| Setting | Behaviour |
+|---------|-----------|
+| `billingEnabled: false` | Assignments are created immediately with no payment |
+| `billingEnabled: true` | A Stripe Checkout session is created for SGD 60 per assignment |
 
-- **Free Courses** — Build your audience
-- **Paid Courses** — Monetize your expertise
-- Flexible pricing in USD
+When billing is enabled:
 
-## Publishing
+- The corporate admin is redirected to Stripe Checkout after confirming the assignment
+- The `stripeSessionId` is recorded on the `CourseAssignment` record
+- The organisation's `stripeCustomerId` is used for the Stripe customer
+- After successful payment, the assignment is activated
 
-### Simplified Publish Flow
+### Assignment Statuses
 
-The current publish flow is streamlined for fast iteration:
-
-1. Fill out required sections (intended learners, curriculum, landing page)
-2. Click **Publish** in the editor sidebar
-3. Confirm in the dialog (warns that enrolled courses cannot be deleted)
-4. Course status changes directly from DRAFT → PUBLISHED
-
-There is no review step. To take a course offline, click **Unpublish** (sets status back to DRAFT).
-
-### Course Status
+```mermaid
+graph LR
+    A[ASSIGNED] --> B[IN_PROGRESS]
+    B --> C[COMPLETED]
+    A --> D[OVERDUE]
+    B --> D[OVERDUE]
+```
 
 | Status | Description |
 |--------|-------------|
-| Draft | Course is being created or unpublished |
-| Published | Live and available for enrollment |
+| **ASSIGNED** | Course has been assigned but the learner has not started |
+| **IN_PROGRESS** | Learner has begun the course (at least one lecture completed) |
+| **COMPLETED** | Learner has finished the course (100% progress) |
+| **OVERDUE** | The deadline has passed without course completion |
 
-> **Note:** Courses with at least 1 enrolled student cannot be deleted. You can only unpublish them.
+## Progress Monitoring (`/corporate/progress`)
 
-## Instructor Dashboard
+Corporate admins can monitor learner progress across their organisation.
 
-The instructor area uses a collapsible sidebar (`InstructorSidebar`) that expands on hover. Available pages:
+### Organisation-Level View
 
-### Courses (`/instructor`)
+- **All assignments** listed with learner name, course title, progress percentage, deadline, and status
+- **Filter by status** to focus on overdue, in-progress, or completed assignments
+- **Sort by deadline** to prioritise urgent training
+- **Completion rates** by course to identify courses where learners struggle
 
-- Udemy-style list view with course rows
-- Client-side search and sort
-- Quick access to edit, preview, or create courses
+### Per-Learner View
 
-### Performance (`/instructor/performance`)
+Drill into individual learner records to see:
 
-- Stats row showing key metrics (enrollments, revenue, ratings)
-- Recharts `LineChart` showing revenue trends over time
-- Date range filter for custom time periods
+- All courses assigned to the learner
+- Progress percentage for each course
+- Time spent on each course (via SCORM total time)
+- Deadline compliance (on time vs overdue)
+- Certificate status (earned or pending)
 
-### Tools (`/instructor/tools`)
+### Per-Course View
 
-- Placeholder cards for future instructor tools
+Review how learners perform on a specific course:
 
-### Profile (`/instructor/profile`)
+- List of all learners assigned to the course within the organisation
+- Individual progress percentages
+- Average completion time
+- Pass/fail rates for quiz-based courses
 
-- Edit instructor profile (name, headline, bio)
-- Social links (website, Twitter, LinkedIn)
-- Profile image upload via Cloudinary
+## Key Metrics
 
-## Earnings
+Corporate admins have access to these organisational metrics:
 
-### Revenue Model
+| Metric | Description |
+|--------|-------------|
+| Total Learners | Number of active learner accounts |
+| Assigned Courses | Total number of active course assignments |
+| Completion Rate | Percentage of assignments that have been completed |
+| Overdue Count | Number of assignments past their deadline |
+| Average Progress | Mean progress across all active assignments |
+| CPD Points Earned | Total CPD points earned by all learners in the organisation |
 
-Instructors earn from course sales:
+## Billing Summary
 
-```mermaid
-pie title Revenue Split
-    "Instructor" : 70
-    "Platform" : 30
-```
+For organisations with billing enabled, corporate admins can track:
 
-### Payout Tracking
-
-- View earnings history
-- Track pending payouts
-- Download financial reports
+- Number of billable assignments created
+- Total spend (number of assignments x SGD 60)
+- Stripe payment status for each assignment
+- Pending vs completed payments
