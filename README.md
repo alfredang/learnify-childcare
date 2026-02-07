@@ -22,7 +22,7 @@
 
 ---
 
-<img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800" alt="Learnify Platform" width="600" style="border-radius: 10px; margin: 20px 0;" />
+<img src="screenshot.png" alt="Learnify Platform" width="600" style="border-radius: 10px; margin: 20px 0;" />
 
 *A full-featured online learning marketplace where instructors create courses and students learn.*
 
