@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🎓 Learnify
+# Learnify Childcare
 
-### Modern Online Learning Platform
+### Corporate E-Learning Platform for Early Childhood Educators
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -10,92 +10,72 @@
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-[![Stripe](https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-Media-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 [![NextAuth.js](https://img.shields.io/badge/NextAuth.js-Auth-000000?style=for-the-badge&logo=auth0&logoColor=white)](https://authjs.dev/)
-[![Netlify](https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://netlify.com/)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
 
-[📖 Documentation](https://alfredang.github.io/Learnify/) • [🚀 Live Demo](https://learnify-corporate-training-platform.netlify.app) • [💻 Getting Started](#-quick-start) • [🤝 Contributing](#-contributing)
+[Live Demo](https://learnify-corporate-training-platform.netlify.app) | [Documentation](https://alfredang.github.io/learnify-childcare/) | [Getting Started](#-quick-start)
 
 ---
 
-<img src="screenshot.png" alt="Learnify Platform" width="600" style="border-radius: 10px; margin: 20px 0;" />
-
-*A full-featured online learning marketplace where instructors create courses and students learn.*
+*A multi-tenant corporate training platform for Singapore childcare organisations. Centres assign ECDA-aligned courses to educators, track SCORM-compatible progress, and earn CPD points.*
 
 </div>
 
 ---
 
-## 🚀 Live Demo
+## Overview
 
-**[https://learnify-corporate-training-platform.netlify.app](https://learnify-corporate-training-platform.netlify.app)**
+Learnify Childcare is a purpose-built e-learning platform for the early childhood education sector in Singapore. Childcare organisations register on the platform, invite their educators as learners, and assign professional development courses with deadlines and CPD (Continuing Professional Development) points.
 
-### Demo Pages
+### Who is it for?
 
-| Page | URL | Description |
-|------|-----|-------------|
-| 🏠 Home | [/](https://learnify-corporate-training-platform.netlify.app/) | Landing page with featured courses |
-| 📚 Courses | [/courses](https://learnify-corporate-training-platform.netlify.app/courses) | Browse all courses |
-| 📂 Categories | [/categories](https://learnify-corporate-training-platform.netlify.app/categories) | Browse course categories |
-| 🔍 Search | [/search](https://learnify-corporate-training-platform.netlify.app/search) | Search for courses |
-| 🛒 Cart | [/cart](https://learnify-corporate-training-platform.netlify.app/cart) | Shopping cart |
-| ℹ️ About | [/about](https://learnify-corporate-training-platform.netlify.app/about) | About the platform |
-| 👨‍🏫 Become Instructor | [/become-instructor](https://learnify-corporate-training-platform.netlify.app/become-instructor) | Instructor signup page |
-| 🔐 Login | [/login](https://learnify-corporate-training-platform.netlify.app/login) | User login |
-| 📝 Register | [/register](https://learnify-corporate-training-platform.netlify.app/register) | New user registration |
+| Role | What they do |
+|------|-------------|
+| **Super Admin** | Manages the platform: creates courses, manages organisations and users |
+| **Corporate Admin** | Manages their organisation: invites learners, assigns courses, tracks progress |
+| **Learner** | Completes assigned courses: watches videos, reads materials, takes quizzes, earns certificates |
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 👨‍🎓 For Students
-- 🔍 Browse & search courses with smart filters
-- 📂 Filter by category, level, and price
-- 🛒 Shopping cart with multi-course checkout
-- 📚 Enroll in free or paid courses
-- 📊 Track learning progress with progress bars
-- 🎥 Watch video lectures with Cloudinary player
-- ⭐ Leave reviews and ratings with star system
-- 💝 Save courses to favourites
-- 📜 Auto-generated completion certificates
-- 🧾 View purchase history and invoices
-- 📱 Mobile-friendly responsive design
+### For Learners
+- View assigned courses with deadlines and CPD points
+- Watch video lectures with progress tracking
+- Read text-based learning materials
+- Take quizzes with instant feedback
+- Track completion progress per course
+- Earn certificates with CPD points on completion
+- SCORM-compatible progress tracking
 
 </td>
 <td width="50%">
 
-### 👨‍🏫 For Instructors
-- 📝 Create rich multimedia courses
-- 🎬 Upload videos via Cloudinary
-- 📄 Add course sections and lectures
-- 💰 Set flexible pricing (free or paid)
-- 📈 Analytics dashboard with insights
-- 💵 Track earnings & payouts (70% revenue share)
-- 📊 Monitor student engagement
-- ✏️ Edit courses anytime
-- 🔒 Control content access
+### For Corporate Admins
+- Dashboard with organisation stats and completion rates
+- Invite and manage learners
+- Assign courses with deadlines
+- Track learner progress across all assignments
+- View overdue and completed assignments
+- Organisation-scoped data isolation
 
 </td>
 </tr>
 <tr>
 <td colspan="2">
 
-### 🔐 For Administrators
-- 📊 Platform-wide analytics & metrics
-- 👥 User management & role control (Student, Instructor, Admin)
-- ✅ Course approval workflow
-- 📂 Category management with icons
-- 💳 Revenue & payout tracking
-- ⚙️ Platform settings configuration
-- 🚫 User suspension capabilities
+### For Super Admins
+- Create and manage courses (video, text, quiz content)
+- Manage organisations and their settings
+- Manage all platform users
+- Platform-wide analytics and stats
+- Course content editor with drag-and-drop reordering
 
 </td>
 </tr>
@@ -103,7 +83,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 <table>
 <tr>
@@ -142,20 +122,18 @@
 <br>NextAuth.js v5
 </td>
 <td align="center" width="96">
-<img src="https://cdn.worldvectorlogo.com/logos/stripe-4.svg" width="48" height="48" alt="Stripe" />
-<br>Stripe
-</td>
-<td align="center" width="96">
 <img src="https://res.cloudinary.com/cloudinary-marketing/image/upload/v1599098500/creative_source/Logo/Cloud%20Glyph/cloudinary_cloud_glyph_blue_png.png" width="48" height="48" alt="Cloudinary" />
 <br>Cloudinary
 </td>
 <td align="center" width="96">
-<img src="https://www.netlify.com/v3/img/components/logomark.png" width="48" height="48" alt="Netlify" />
-<br>Netlify
-</td>
-<td align="center" width="96">
 <img src="https://neon.tech/favicon/favicon.svg" width="48" height="48" alt="Neon" />
 <br>Neon DB
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=vercel" width="48" height="48" alt="Vercel" />
+<br>Vercel
+</td>
+<td align="center" width="96">
 </td>
 </tr>
 </table>
@@ -164,155 +142,101 @@
 
 | Library | Purpose |
 |---------|---------|
-| `react-hook-form` | Form management with validation |
-| `zod` | Schema validation |
+| `react-hook-form` + `zod` | Form management with schema validation |
 | `@tanstack/react-query` | Server state management |
-| `zustand` | Client state management |
 | `@tiptap/react` | Rich text editor for course descriptions |
 | `@dnd-kit` | Drag and drop for section/lecture reordering |
 | `sonner` | Toast notifications |
 | `lucide-react` | Icon library |
-| `date-fns` | Date formatting |
-| `slugify` | URL slug generation |
 | `bcryptjs` | Password hashing |
 
 ---
 
-## 🗺️ Application Routes
+## Application Routes
+
+### Learner Routes (Protected)
+| Route | Description |
+|-------|-------------|
+| `/dashboard` | Assigned courses, deadlines, CPD summary |
+| `/my-courses` | All enrolled courses with progress |
+| `/my-courses/[courseId]` | Course overview with sections |
+| `/my-courses/[courseId]/lectures/[lectureId]` | Lecture viewer (video/text/quiz) |
+| `/certificates` | Earned completion certificates |
+| `/account` | Profile and account settings |
+
+### Corporate Admin Routes (Protected)
+| Route | Description |
+|-------|-------------|
+| `/corporate` | Organisation dashboard with stats |
+| `/corporate/learners` | Manage and invite learners |
+| `/corporate/assign` | Assign courses to learners |
+| `/corporate/progress` | Learner progress reports |
+
+### Super Admin Routes (Protected)
+| Route | Description |
+|-------|-------------|
+| `/admin` | Platform-wide dashboard |
+| `/admin/courses` | Manage all courses |
+| `/admin/organizations` | Manage organisations |
+| `/admin/users` | Manage all users |
 
 ### Public Routes
 | Route | Description |
 |-------|-------------|
-| `/` | Homepage with featured courses and categories |
-| `/courses` | Browse all published courses |
-| `/courses/[slug]` | Individual course details page |
-| `/courses/[slug]/enroll` | Course enrollment/checkout page |
-| `/categories` | Browse all categories |
-| `/categories/[slug]` | Courses in a specific category |
-| `/instructors/[id]` | Instructor profile page |
-| `/search` | Search courses |
-| `/about` | About the platform |
-| `/become-instructor` | Instructor application page |
+| `/` | Landing page (redirects to dashboard if logged in) |
 | `/login` | User login |
 | `/register` | User registration |
-| `/forgot-password` | Password reset |
-| `/checkout/success` | Payment success page |
-
-### Student Routes (Protected)
-| Route | Description |
-|-------|-------------|
-| `/my-courses` | Student's enrolled courses |
-| `/my-courses/[courseId]` | Course overview with sections |
-| `/my-courses/[courseId]/lectures/[lectureId]` | Video lecture player |
-| `/cart` | Shopping cart |
-| `/favourites` | Saved/favourite courses |
-| `/certificates` | Earned completion certificates |
-| `/account` | Account settings |
-| `/account/purchases` | Purchase history |
-| `/account/invoices` | Invoice history |
-| `/notifications` | User notifications |
-| `/messages` | User messages |
-
-### Instructor Routes (Protected)
-| Route | Description |
-|-------|-------------|
-| `/instructor` | Instructor dashboard |
-| `/instructor/courses` | Manage courses |
-| `/instructor/courses/new` | Create new course |
-
-### Admin Routes (Protected)
-| Route | Description |
-|-------|-------------|
-| `/admin` | Admin dashboard |
-| `/admin/users` | User management |
-| `/admin/courses` | Course management |
-| `/admin/applications` | Instructor applications review |
 
 ---
 
-## 🔌 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/[...nextauth]` | ALL | NextAuth.js authentication |
-| `/api/auth/register` | POST | User registration |
-| `/api/courses` | GET/POST | Get courses / Create course |
-| `/api/courses/[id]` | GET/PATCH/DELETE | Course CRUD operations |
-| `/api/courses/[id]/sections` | GET/POST | Course sections management |
-| `/api/courses/[id]/reviews` | GET/POST | Course reviews |
-| `/api/categories` | GET | Get all categories |
-| `/api/cart` | GET/POST/DELETE | Shopping cart management |
-| `/api/favourites` | GET/POST/DELETE | Favourites/wishlist |
-| `/api/checkout` | POST | Create Stripe checkout session |
-| `/api/checkout/verify` | POST | Verify checkout completion |
-| `/api/enrollments` | POST | Enroll in free courses |
-| `/api/certificates/generate` | POST | Generate completion certificate |
-| `/api/lectures/[id]/progress` | POST | Update lecture progress |
-| `/api/instructor-applications` | POST | Submit instructor application |
-| `/api/admin/instructor-applications` | GET/PATCH | Review applications (admin) |
-| `/api/webhooks/stripe` | POST | Handle Stripe webhooks |
-
----
-
-## 🗄️ Database Schema
+## Database Schema
 
 ```mermaid
 erDiagram
-    User ||--o{ Course : creates
+    Organization ||--o{ User : has
+    Organization ||--o{ CourseAssignment : has
     User ||--o{ Enrollment : has
-    User ||--o{ Review : writes
-    User ||--o{ Purchase : makes
-    User ||--o{ Wishlist : has
-    User ||--o{ CartItem : has
+    User ||--o{ CourseAssignment : "assigned to"
+    User ||--o{ CourseAssignment : "assigned by"
+    User ||--o{ Course : creates
     User ||--o{ Certificate : earns
-    User ||--o| InstructorApplication : submits
     Course ||--o{ Section : contains
-    Section ||--o{ Lecture : contains
-    Lecture ||--o{ Resource : has
     Course ||--o{ Enrollment : has
-    Course ||--o{ Review : receives
-    Course ||--o{ CartItem : in
+    Course ||--o{ CourseAssignment : has
     Course }o--|| Category : belongs_to
+    Section ||--o{ Lecture : contains
     Enrollment ||--o{ LectureProgress : tracks
-    Purchase ||--|| Course : for
 ```
 
-### Models
+### Key Models
 
 | Model | Description |
 |-------|-------------|
-| **User** | Users with roles (STUDENT, INSTRUCTOR, ADMIN) |
-| **Course** | Course with title, description, price, status |
-| **Category** | Course categories with icons |
-| **Section** | Course sections/modules |
-| **Lecture** | Video lectures with duration |
-| **Enrollment** | Student course enrollments |
-| **LectureProgress** | Track lecture completion status |
-| **Review** | Course ratings and reviews |
-| **Purchase** | Payment transactions |
-| **Certificate** | Completion certificates |
-| **Wishlist** | Saved/favourite courses |
-| **CartItem** | Shopping cart items |
-| **InstructorApplication** | Instructor signup applications |
-| **Earning** | Instructor earnings |
+| **User** | Roles: LEARNER, CORPORATE_ADMIN, SUPER_ADMIN |
+| **Organization** | Multi-tenant childcare centres with ECDA license |
+| **Course** | Platform-managed courses with CPD points and SCORM tracking |
+| **CourseAssignment** | Links learners to courses with deadlines and status |
+| **Enrollment** | Tracks progress with SCORM-compatible fields |
+| **LectureProgress** | Per-lecture completion with SCORM session data |
+| **Certificate** | Completion certificates with CPD points |
+| **Category** | 7 childcare-specific categories |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
 - **Node.js** 20.0 or higher
 - **PostgreSQL** database ([Neon](https://neon.tech) recommended)
-- **Stripe** account for payments
-- **Cloudinary** account for media
+- **Cloudinary** account for media uploads
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/alfredang/Learnify.git
-cd Learnify
+git clone https://github.com/alfredang/learnify-childcare.git
+cd learnify-childcare
 
 # Install dependencies
 npm install
@@ -330,7 +254,7 @@ npm run db:seed
 npm run dev
 ```
 
-### 🔑 Environment Variables
+### Environment Variables
 
 Create a `.env` file:
 
@@ -348,11 +272,6 @@ AUTH_GOOGLE_SECRET=""
 AUTH_GITHUB_ID=""
 AUTH_GITHUB_SECRET=""
 
-# Stripe
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
 # Cloudinary
 CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
@@ -362,105 +281,150 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your-upload-preset"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Stripe (optional - for billing-enabled organisations)
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_PUBLISHABLE_KEY="pk_test_..."
 ```
 
-### 🧪 Test Accounts
+### Test Accounts
 
 After seeding, use these accounts:
 
-| Role | Email | Password |
-|------|-------|----------|
-| 👑 Admin | `admin@learnify.com` | `password123` |
-| 👨‍🏫 Instructor | `john@learnify.com` | `password123` |
-| 👨‍🏫 Instructor | `sarah@learnify.com` | `password123` |
-| 👨‍🎓 Student | `student1@example.com` | `password123` |
+| Role | Email | Password | Organisation |
+|------|-------|----------|-------------|
+| Super Admin | `admin@learnify.sg` | `password123` | - |
+| Corporate Admin | `manager@sunshine.sg` | `password123` | Sunshine Childcare |
+| Corporate Admin | `admin@littleexplorers.sg` | `password123` | Little Explorers |
+| Learner | `sarah@sunshine.sg` | `password123` | Sunshine Childcare |
+| Learner | `priya@sunshine.sg` | `password123` | Sunshine Childcare |
+| Learner | `zhang@littleexplorers.sg` | `password123` | Little Explorers |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-learnify/
-├── 📂 prisma/
-│   ├── schema.prisma          # Database schema (20+ models)
-│   └── seed.ts                # Seed data with sample courses
-├── 📂 docs/                   # MkDocs documentation
-│   ├── index.md               # Documentation home
-│   ├── features/              # Feature documentation
-│   ├── api/                   # API documentation
-│   └── deployment/            # Deployment guides
-├── 📂 src/
-│   ├── 📂 app/                # Next.js App Router
-│   │   ├── (auth)/            # Auth pages (login, register)
-│   │   ├── (browse)/          # Public pages (courses, categories)
-│   │   ├── (student)/         # Student dashboard
-│   │   ├── (instructor)/      # Instructor dashboard
-│   │   ├── (admin)/           # Admin panel
-│   │   └── api/               # API routes
-│   ├── 📂 components/
-│   │   ├── ui/                # 30+ shadcn/ui components
-│   │   ├── layout/            # Header, Footer, Navigation
-│   │   ├── auth/              # Auth forms
-│   │   ├── courses/           # Course cards, grids
-│   │   └── shared/            # Shared components
-│   ├── 📂 lib/
-│   │   ├── prisma.ts          # Prisma client
-│   │   ├── auth.ts            # NextAuth config
-│   │   ├── stripe.ts          # Stripe utilities
-│   │   ├── cloudinary.ts      # Cloudinary config
-│   │   ├── validations/       # Zod schemas
-│   │   └── constants.ts       # App constants
-│   ├── 📂 hooks/              # Custom React hooks
-│   ├── 📂 providers/          # Context providers
-│   └── middleware.ts          # Route protection
-├── 📂 public/                 # Static assets
-├── .env.example               # Environment template
-├── netlify.toml               # Netlify config
-├── mkdocs.yml                 # Documentation config
+learnify-childcare/
+├── prisma/
+│   ├── schema.prisma              # Database schema
+│   └── seed.ts                    # Seed data (childcare courses)
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                # Login, register, forgot-password
+│   │   ├── (learner)/             # Learner pages
+│   │   │   ├── dashboard/         # Assigned courses & deadlines
+│   │   │   ├── my-courses/        # Course viewer & lecture player
+│   │   │   ├── certificates/      # Earned certificates
+│   │   │   └── account/           # Profile settings
+│   │   ├── (corporate)/           # Corporate admin pages
+│   │   │   └── corporate/
+│   │   │       ├── learners/      # Manage learners
+│   │   │       ├── assign/        # Assign courses
+│   │   │       └── progress/      # Progress reports
+│   │   ├── (admin)/               # Super admin pages
+│   │   │   └── admin/
+│   │   │       ├── courses/       # Course management
+│   │   │       ├── organizations/ # Organisation management
+│   │   │       └── users/         # User management
+│   │   └── api/                   # REST API routes
+│   ├── components/
+│   │   ├── ui/                    # shadcn/ui components
+│   │   ├── layout/                # Header, Footer, Navigation
+│   │   ├── courses/               # Course cards, editor, players
+│   │   └── shared/                # Shared components
+│   ├── lib/
+│   │   ├── prisma.ts              # Prisma client singleton
+│   │   ├── auth.ts                # NextAuth v5 config
+│   │   ├── scorm.ts               # SCORM tracking utilities
+│   │   ├── cloudinary.ts          # Cloudinary helpers
+│   │   ├── stripe.ts              # Optional Stripe billing
+│   │   ├── constants.ts           # App constants & categories
+│   │   └── validations/           # Zod schemas
+│   ├── hooks/                     # Custom React hooks
+│   ├── providers/                 # Context providers
+│   ├── types/                     # TypeScript types
+│   └── middleware.ts              # Route protection & role checks
 └── package.json
 ```
 
 ---
 
-## 🖥️ Available Scripts
+## Seed Data
+
+The platform comes pre-seeded with realistic childcare training data:
+
+### Organisations (3)
+| Name | License | Learners |
+|------|---------|----------|
+| Sunshine Childcare Centre | SCC-2024-001 | Sarah Ong, Priya Nair |
+| Little Explorers Academy | LEA-2024-002 | Zhang Li |
+| Bright Beginnings Preschool | BBP-2024-003 | - |
+
+### Courses (8)
+| Course | Category | CPD Points | Hours |
+|--------|----------|-----------|-------|
+| CPR & First Aid for Childcare Workers | Health & Safety | 3 | 2.5 |
+| Child Development Milestones: 0-6 Years | Child Development | 4 | 3.0 |
+| Early Literacy Strategies | Curriculum Planning | 3 | 2.0 |
+| Nutrition & Meal Planning for Children | Nutrition & Wellness | 2 | 2.0 |
+| Managing Challenging Behaviours | Special Needs | 3 | 2.5 |
+| Effective Parent-Teacher Communication | Parent Communication | 2 | 2.0 |
+| ECDA Licensing Requirements & Compliance | Regulatory Compliance | 4 | 3.0 |
+| Inclusive Education in Early Childhood | Special Needs | 3 | 2.5 |
+
+Each course contains 3 sections with 3 lectures each (mix of video, text, and quiz content).
+
+---
+
+## Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server on port 3000 |
+| `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npm run db:push` | Push schema to database |
-| `npm run db:migrate` | Run database migrations |
 | `npm run db:seed` | Seed database with sample data |
 | `npm run db:studio` | Open Prisma Studio GUI |
 
 ---
 
-## 🚢 Deployment
+## API Endpoints
 
-### Deploy to Netlify (Current)
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/auth/[...nextauth]` | ALL | - | NextAuth handler |
+| `/api/auth/register` | POST | No | User registration |
+| `/api/courses` | GET/POST | Yes | List/create courses |
+| `/api/courses/[id]` | GET/PUT/DELETE | Yes | Course CRUD |
+| `/api/courses/[id]/sections` | POST | Admin | Create section |
+| `/api/courses/[id]/sections/[sectionId]/lectures` | POST | Admin | Create lecture |
+| `/api/organizations` | GET/POST | Admin | Organisation management |
+| `/api/organizations/[id]/learners` | GET/POST | Corp Admin | Learner management |
+| `/api/assignments` | GET/POST | Corp Admin | Course assignments |
+| `/api/lectures/[lectureId]/progress` | POST | Learner | Update progress (SCORM) |
+| `/api/certificates/generate` | POST | Learner | Generate certificate |
+| `/api/certificates/[id]/download` | GET | Learner | Download certificate PDF |
+| `/api/profile` | GET/PUT | Yes | User profile |
+| `/api/upload/signature` | GET | Admin | Cloudinary upload signature |
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/alfredang/Learnify)
+---
 
-**Live Demo:** [learnify-corporate-training-platform.netlify.app](https://learnify-corporate-training-platform.netlify.app)
+## Deployment
 
 ### Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alfredang/Learnify)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alfredang/learnify-childcare)
 
-### Environment Variables for Production
-
-When deploying, add these environment variables:
+### Required Environment Variables
 
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `AUTH_SECRET` | NextAuth secret key |
 | `AUTH_URL` | Production URL |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret |
@@ -470,38 +434,7 @@ When deploying, add these environment variables:
 
 ---
 
-## 📖 Documentation
-
-Full documentation is available at **[alfredang.github.io/Learnify](https://alfredang.github.io/Learnify/)**
-
-- [Getting Started](https://alfredang.github.io/Learnify/getting-started/installation/)
-- [Features Overview](https://alfredang.github.io/Learnify/features/students/)
-- [API Reference](https://alfredang.github.io/Learnify/api/authentication/)
-- [Deployment Guide](https://alfredang.github.io/Learnify/deployment/netlify/)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our contributing guidelines first.
-
-```bash
-# Fork the repo
-# Create your feature branch
-git checkout -b feature/amazing-feature
-
-# Commit your changes
-git commit -m 'Add amazing feature'
-
-# Push to the branch
-git push origin feature/amazing-feature
-
-# Open a Pull Request
-```
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -509,10 +442,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-### ⭐ Star this repo if you find it useful!
-
-Made with ❤️ by [Alfred Ang](https://github.com/alfredang)
-
-[⬆ Back to Top](#-learnify)
+Made with care by [Alfred Ang](https://github.com/alfredang)
 
 </div>
